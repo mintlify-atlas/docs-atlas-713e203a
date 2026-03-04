@@ -1,97 +1,250 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+mode: "custom"
 ---
 
-## Setting up
+<div className="relative overflow-hidden">
+  {/* Hero Section */}
+  <div className="relative bg-gradient-to-b from-[#0f1117] via-[#1a1d27] to-[#0f1117] dark:from-[#0f1117] dark:via-[#1a1d27] dark:to-[#0f1117] py-20 px-6">
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(4,247,4,0.1),transparent_50%)]"></div>
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(4,247,4,0.05),transparent_50%)]"></div>
+    
+    <div className="relative max-w-7xl mx-auto">
+      <div className="text-center">
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white dark:text-white mb-6">
+          Self-hosted game streaming
+          <br />
+          <span className="text-[#04f704]">made simple</span>
+        </h1>
+        <p className="text-xl md:text-2xl text-gray-300 dark:text-gray-300 max-w-3xl mx-auto mb-10">
+          Low-latency game streaming server for Moonlight. Stream your games from anywhere with hardware-accelerated encoding support for AMD, Intel, and Nvidia GPUs.
+        </p>
+        
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <a 
+            href="/quickstart" 
+            className="inline-flex items-center px-8 py-4 text-lg font-semibold text-black bg-[#04f704] rounded-lg hover:bg-[#03d603] transition-colors duration-200 no-underline"
+          >
+            Get started
+            <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a 
+            href="/installation" 
+            className="inline-flex items-center px-8 py-4 text-lg font-semibold text-white bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 hover:border-[#04f704] transition-all duration-200 no-underline"
+          >
+            Installation guide
+          </a>
+        </div>
+        
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400 dark:text-gray-400">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-[#04f704]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Multi-platform
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-[#04f704]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Hardware encoding
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-[#04f704]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            Open source
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-Get your documentation site up and running in minutes.
+  {/* Quick Start Section */}
+  <div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Quick start</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">Get streaming in minutes with these simple steps</p>
+    
+    <Steps>
+      <Step title="Install Sunshine on your host">
+        Download and install Sunshine on the computer you want to stream from. We provide binaries for Linux, Windows, macOS, and FreeBSD.
+        
+        ```bash
+        # Linux (Debian/Ubuntu)
+        sudo apt install ./sunshine-ubuntu-24.04-amd64.deb
+        
+        # Windows (via winget)
+        winget install LizardByte.Sunshine
+        
+        # macOS (via Homebrew)
+        brew install sunshine
+        ```
+      </Step>
+      
+      <Step title="Configure your stream settings">
+        Access the web UI at `https://localhost:47990` to configure your stream quality, encoder settings, and add applications.
+        
+        <Tip>Use hardware encoding for the best performance. Sunshine supports AMD, Intel, and Nvidia GPU encoding.</Tip>
+      </Step>
+      
+      <Step title="Pair your Moonlight client">
+        Install Moonlight on your client device and pair it with your Sunshine host using the PIN shown in the web UI.
+        
+        <Note>Moonlight is available on Windows, macOS, Linux, Android, iOS, and more.</Note>
+      </Step>
+      
+      <Step title="Start streaming">
+        Select your configured application in Moonlight and start streaming. Enjoy low-latency gaming from anywhere on your network.
+      </Step>
+    </Steps>
+  </div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+  {/* Features Grid */}
+  <div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Key features</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">Everything you need for professional game streaming</p>
+    
+    <CardGroup cols={2}>
+      <Card title="Hardware acceleration" icon="microchip" href="/configuration/audio-video">
+        Support for AMD, Intel, and Nvidia GPU encoding with automatic detection and configuration
+      </Card>
+      <Card title="Multi-platform support" icon="desktop" href="/installation">
+        Run on Linux, Windows, macOS, or FreeBSD with native optimizations for each platform
+      </Card>
+      <Card title="Web-based configuration" icon="browser" href="/configuration/overview">
+        Configure everything through an intuitive web interface with real-time validation
+      </Card>
+      <Card title="4K HDR streaming" icon="tv" href="/guides/performance-tuning">
+        Stream in up to 4K resolution with HDR support on compatible hardware
+      </Card>
+      <Card title="Multiple controller types" icon="gamepad" href="/configuration/input">
+        Emulate Xbox, PlayStation, and Nintendo controllers for maximum compatibility
+      </Card>
+      <Card title="RESTful API" icon="code" href="/api/overview">
+        Automate and integrate with our comprehensive REST API
+      </Card>
+    </CardGroup>
+  </div>
 
-## Make it yours
+  {/* Explore by Topic */}
+  <div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Explore documentation</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">Deep dive into specific topics</p>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <a href="/configuration/overview" className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#04f704] dark:hover:border-[#04f704] overflow-hidden transition-colors duration-200 no-underline bg-white dark:bg-[#1a1d27]">
+        <div className="h-40 bg-gradient-to-br from-[#0c5e0c] to-[#04f704] flex items-center justify-center">
+          <svg className="w-20 h-20 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+        <div className="p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-[#04f704] transition-colors">Configuration</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Learn how to configure audio, video, input, network settings, and applications</p>
+          <div className="flex items-center text-sm font-medium text-gray-900 dark:text-gray-300 group-hover:text-[#04f704] transition-colors">
+            Read the guide
+            <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </a>
+      
+      <a href="/deployment/docker-compose" className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#04f704] dark:hover:border-[#04f704] overflow-hidden transition-colors duration-200 no-underline bg-white dark:bg-[#1a1d27]">
+        <div className="h-40 bg-gradient-to-br from-[#040404] to-[#0c5e0c] flex items-center justify-center">
+          <svg className="w-20 h-20 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+          </svg>
+        </div>
+        <div className="p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-[#04f704] transition-colors">Deployment</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Deploy Sunshine with Docker, systemd, or as a standalone service</p>
+          <div className="flex items-center text-sm font-medium text-gray-900 dark:text-gray-300 group-hover:text-[#04f704] transition-colors">
+            View deployment options
+            <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </a>
+      
+      <a href="/api/overview" className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#04f704] dark:hover:border-[#04f704] overflow-hidden transition-colors duration-200 no-underline bg-white dark:bg-[#1a1d27]">
+        <div className="h-40 bg-gradient-to-br from-[#1a1d27] to-[#0c5e0c] flex items-center justify-center">
+          <svg className="w-20 h-20 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+        </div>
+        <div className="p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-[#04f704] transition-colors">API Reference</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Explore the REST API for automation and integration</p>
+          <div className="flex items-center text-sm font-medium text-gray-900 dark:text-gray-300 group-hover:text-[#04f704] transition-colors">
+            Browse API docs
+            <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </a>
+      
+      <a href="/guides/troubleshooting" className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#04f704] dark:hover:border-[#04f704] overflow-hidden transition-colors duration-200 no-underline bg-white dark:bg-[#1a1d27]">
+        <div className="h-40 bg-gradient-to-br from-[#0c5e0c] to-[#040404] flex items-center justify-center">
+          <svg className="w-20 h-20 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+        <div className="p-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-[#04f704] transition-colors">Troubleshooting</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Find solutions to common issues and get help</p>
+          <div className="flex items-center text-sm font-medium text-gray-900 dark:text-gray-300 group-hover:text-[#04f704] transition-colors">
+            Get help
+            <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
 
-Design a docs site that looks great and empowers your users.
+  {/* Community Section */}
+  <div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Community and support</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">Get help and connect with other users</p>
+    
+    <CardGroup cols={3}>
+      <Card title="GitHub" icon="github" href="https://github.com/LizardByte/Sunshine">
+        Report issues, request features, and contribute code
+      </Card>
+      <Card title="Discord" icon="discord" href="https://app.lizardbyte.dev/discord">
+        Chat with the community and get real-time help
+      </Card>
+      <Card title="Documentation" icon="book" href="/guides/troubleshooting">
+        Browse guides and troubleshooting resources
+      </Card>
+    </CardGroup>
+  </div>
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+  {/* Closing CTA */}
+  <div className="mt-20 mb-16 max-w-5xl mx-auto px-6">
+    <div className="relative rounded-3xl bg-gradient-to-br from-[#0c5e0c] to-[#04f704] p-12 overflow-hidden">
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
+      <div className="relative text-center">
+        <h2 className="text-4xl font-bold text-black mb-4">Ready to start streaming?</h2>
+        <p className="text-xl text-black/80 mb-8 max-w-2xl mx-auto">
+          Install Sunshine and start streaming your games in minutes
+        </p>
+        <a 
+          href="/quickstart" 
+          className="inline-flex items-center px-8 py-4 text-lg font-semibold text-[#04f704] bg-black rounded-lg hover:bg-black/90 transition-colors duration-200 no-underline"
+        >
+          Get started now
+          <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

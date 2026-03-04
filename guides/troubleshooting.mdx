@@ -1,0 +1,397 @@
+---
+title: Troubleshooting
+description: Solutions to common issues, platform-specific problems, and debugging tips
+---
+
+This guide covers common issues you may encounter with Sunshine and how to resolve them.
+
+## General Issues
+
+<AccordionGroup>
+  <Accordion title="Forgotten Web UI Credentials">
+    If you forgot your credentials to the web UI, you can reset them using the command line:
+
+    <Tabs>
+      <Tab title="Standard Installation">
+        ```bash
+        sunshine --creds {new-username} {new-password}
+        ```
+      </Tab>
+      
+      <Tab title="AppImage">
+        ```bash
+        ./sunshine.AppImage --creds {new-username} {new-password}
+        ```
+      </Tab>
+      
+      <Tab title="Flatpak">
+        ```bash
+        flatpak run --command=sunshine dev.lizardbyte.app.Sunshine --creds {new-username} {new-password}
+        ```
+      </Tab>
+    </Tabs>
+
+    <Tip>
+    Replace `{new-username}` and `{new-password}` with your desired credentials. Do not include the curly braces.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Can't Access Web UI">
+    If you cannot access the Sunshine web UI at `https://localhost:47990`:
+
+    **Check firewall rules:**
+    - Ensure ports 47984-47990 (TCP and UDP) are allowed through your firewall
+    - On Linux, check `ufw status` or `firewall-cmd --list-all`
+    - On Windows, check Windows Defender Firewall settings
+
+    **Verify Sunshine is running:**
+    - Check if the Sunshine process is active
+    - Review Sunshine logs for startup errors
+
+    **Try alternate access methods:**
+    - Use your local IP address instead of `localhost`
+    - Try `http://` instead of `https://` (not recommended for production)
+  </Accordion>
+
+  <Accordion title="Unusual Mouse Behavior">
+    If you experience erratic or unusual mouse behavior during streaming:
+
+    **Solution:** Attach a physical mouse to the Sunshine host computer.
+
+    Some systems require at least one physical mouse to be connected for proper cursor tracking when streaming virtual input from Moonlight clients.
+  </Accordion>
+
+  <Accordion title="Controller Works in Steam But Not in Games">
+    If your controller works in Steam Big Picture but not in actual games:
+
+    **Solutions:**
+
+    1. **Adjust Steam controller settings:**
+       - Open Steam Settings → Controller
+       - Disable Xbox/PlayStation controller support
+       - Leave only Generic Gamepad support enabled
+
+    2. **Disable conflicting physical controllers (Linux):**
+       ```bash
+       # Find the device in /sys/bus/usb/devices/
+       echo 0 | sudo tee /sys/bus/usb/devices/{device-id}/authorized
+       ```
+       This makes the Sunshine-provided virtual controller the "first" controller.
+  </Accordion>
+</AccordionGroup>
+
+## Network Issues
+
+<AccordionGroup>
+  <Accordion title="High Packet Loss (Buffer Overrun)">
+    If the host PC has a much faster network connection than the client (e.g., 2.5 Gbps vs 1 Gbps), packet loss can occur.
+
+    **Symptoms:**
+    - Stuttering or freezing video
+    - Audio dropouts
+    - High packet loss reported in Moonlight
+
+    **Solutions:**
+
+    1. **Reduce host NIC speed:**
+       - Set 2.5 Gbps NIC to 1 Gbps
+       - Set 1 Gbps NIC to 100 Mbps
+
+    2. **Configure traffic shaping (Linux):**
+       ```bash
+       # Remove existing qdisc
+       sudo tc qdisc del dev <NIC> root
+
+       # Add HTB root qdisc
+       sudo tc qdisc add dev <NIC> root handle 1: htb default 1
+
+       # Create class for normal traffic
+       sudo tc class add dev <NIC> parent 1: classid 1:1 htb \
+           rate 10000mbit ceil 10000mbit burst 32k
+
+       # Create class for Sunshine at 1 Gbit/s
+       sudo tc class add dev <NIC> parent 1: classid 1:10 htb \
+           rate 1000mbit ceil 1000mbit burst 32k
+
+       # Filter Sunshine traffic (UDP port 47998)
+       sudo tc filter add dev <NIC> protocol ip parent 1: prio 1 \
+           u32 match ip protocol 17 0xff \
+           match ip sport 47998 0xffff flowid 1:10
+       ```
+
+    <Note>
+    Sunshine versions > 0.23.1 include improved networking code that should alleviate this issue.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Packet Loss (MTU Issues)">
+    Some clients work better with a lower [MTU](https://en.wikipedia.org/wiki/Maximum_transmission_unit) value.
+
+    **Symptoms:**
+    - 30-60% packet loss
+    - Connection instability
+
+    **Solution:**
+    Try reducing MTU from 1500 to 1428 on the network interface serving the stream.
+
+    **Linux:**
+    ```bash
+    sudo ip link set dev <interface> mtu 1428
+    ```
+
+    **Windows:**
+    ```powershell
+    netsh interface ipv4 set subinterface "<interface>" mtu=1428
+    ```
+
+    <Warning>
+    This is a last-resort solution. Test thoroughly as it may affect other network applications.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## Linux-Specific Issues
+
+<AccordionGroup>
+  <Accordion title="Hardware Encoding Fails">
+    If you see this error in Sunshine logs:
+
+    ```
+    Error: Could not open codec [h264_vaapi]: Function not implemented
+    ```
+
+    **Cause:** Mesa has disabled hardware encoding by default due to legal concerns.
+
+    **Solution:** Compile Mesa manually with encoders enabled:
+
+    ```bash
+    -Dvideo-codecs=h264enc,h265enc
+    ```
+
+    See the [Mesa3D documentation](https://docs.mesa3d.org/install.html) for complete instructions.
+  </Accordion>
+
+  <Accordion title="Input Not Working">
+    If keyboard, mouse, or controller input doesn't work:
+
+    **Solution 1: Reload udev rules**
+    ```bash
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger
+    ```
+
+    If that doesn't work, restart your system.
+
+    **Solution 2: Add user to input group**
+    ```bash
+    sudo usermod -aG input $USER
+    ```
+
+    Log out and back in for changes to take effect.
+  </Accordion>
+
+  <Accordion title="KMS Streaming Fails">
+    If KMS screen capture doesn't work:
+
+    **Solution:** Switch to the privileged sunshine-kms service:
+
+    ```bash
+    systemctl --user --now disable sunshine
+    systemctl --user --now enable sunshine-kms
+    ```
+
+    <Warning>
+    This does not work with AppImage or Flatpak packages due to security restrictions. Use XDG Portal capture instead.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="KMS Streaming Black Screen (NVIDIA)">
+    If KMS capture results in a black screen on NVIDIA GPUs:
+
+    **Solution:** Enable modesetting for NVIDIA's kernel module.
+
+    Add this to your kernel command line:
+    ```bash
+    nvidia_drm.modeset=1
+    ```
+
+    **For GRUB:**
+    1. Edit `/etc/default/grub`
+    2. Add `nvidia_drm.modeset=1` to `GRUB_CMDLINE_LINUX`
+    3. Run `sudo update-grub`
+    4. Reboot
+  </Accordion>
+
+  <Accordion title="AMD Encoding High Latency">
+    If you notice high or fluctuating encoding latencies with AMD GPUs (especially at 4K):
+
+    **Cause:** Mesa version < 24.2 doesn't support low-latency encoding mode.
+
+    **Solution:** Update Mesa to version 24.2 or newer.
+
+    Sunshine automatically sets `AMD_DEBUG=lowlatencyenc` when available.
+
+    **Verify low-latency mode:**
+    Monitor VCLK and DCLK frequencies with `amdgpu_top`. They should stay consistently high during encoding.
+  </Accordion>
+
+  <Accordion title="Gamescope Stuttering">
+    Some users report stuttering when streaming games running within Gamescope.
+
+    **Workarounds:**
+    - Try different Gamescope rendering backends
+    - Adjust Gamescope FPS limits
+    - Use regular desktop capture instead of Gamescope
+  </Accordion>
+</AccordionGroup>
+
+## macOS-Specific Issues
+
+<AccordionGroup>
+  <Accordion title="Dynamic Session Lookup Failed">
+    If you encounter this error:
+
+    > Dynamic session lookup supported but failed: launchd did not provide a socket path
+
+    **Solution:**
+    ```bash
+    launchctl load -w /Library/LaunchAgents/org.freedesktop.dbus-session.plist
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Windows-Specific Issues
+
+<AccordionGroup>
+  <Accordion title="No Gamepad Detected">
+    If virtual gamepads don't work in Moonlight:
+
+    **Solution:** Install ViGEmBus driver.
+
+    **Option 1: Web UI**
+    - Go to the Troubleshooting tab in Sunshine Web UI
+    - Click "Install ViGEmBus"
+
+    **Option 2: Manual installation**
+    - Download from [ViGEmBus releases](https://github.com/nefarius/ViGEmBus/releases/latest)
+    - Version 1.17 or newer required
+    - Restart computer after installation
+  </Accordion>
+
+  <Accordion title="Permission Denied Errors">
+    If you get permission denied errors when launching games on non-system drives:
+
+    **Cause:** Sunshine runs as a Windows service with the SYSTEM account, which may not have access to all drives.
+
+    **Solution:** Grant SYSTEM account full permissions:
+
+    <Steps>
+      <Step title="Open Drive Properties">
+        Right-click the drive in File Explorer → Properties
+      </Step>
+      
+      <Step title="Open Security Settings">
+        Go to Security tab → Advanced
+      </Step>
+      
+      <Step title="Add SYSTEM Permissions">
+        Add or modify the SYSTEM user/principal to have Full Control
+      </Step>
+      
+      <Step title="Apply Changes">
+        Apply changes to all subdirectories and files
+      </Step>
+    </Steps>
+  </Accordion>
+
+  <Accordion title="Stuttering Issues">
+    If you experience stuttering with NVIDIA GPUs:
+
+    **Solution:** Disable `vsync:fast` in NVIDIA Control Panel.
+
+    <Steps>
+      <Step title="Open NVIDIA Control Panel">
+        Right-click desktop → NVIDIA Control Panel
+      </Step>
+      
+      <Step title="Navigate to 3D Settings">
+        Manage 3D Settings → Global Settings
+      </Step>
+      
+      <Step title="Change Vertical Sync">
+        Set Vertical sync to "Use the 3D application setting" or "Off"
+      </Step>
+    </Steps>
+  </Accordion>
+</AccordionGroup>
+
+## Debugging and Log Collection
+
+### Finding Sunshine Logs
+
+<Tabs>
+  <Tab title="Linux">
+    **Systemd service:**
+    ```bash
+    journalctl -u sunshine
+    ```
+
+    **Flatpak:**
+    ```bash
+    flatpak logs dev.lizardbyte.app.Sunshine
+    ```
+
+    **AppImage/Manual:**
+    Check `~/.config/sunshine/sunshine.log`
+  </Tab>
+  
+  <Tab title="Windows">
+    Logs are located at:
+    ```
+    C:\Program Files\Sunshine\config\sunshine.log
+    ```
+
+    Or check Windows Event Viewer:
+    - Application logs
+    - Filter by "Sunshine" source
+  </Tab>
+  
+  <Tab title="macOS">
+    ```bash
+    ~/Library/Application Support/Sunshine/sunshine.log
+    ```
+  </Tab>
+</Tabs>
+
+### Increasing Log Verbosity
+
+For more detailed logs:
+
+1. Open Sunshine Web UI
+2. Go to Configuration → Advanced
+3. Set **Log Level** to `debug` or `verbose`
+4. Restart Sunshine
+
+<Warning>
+Verbose logging can impact performance. Reset to `info` after troubleshooting.
+</Warning>
+
+### Reporting Issues
+
+When reporting issues on [GitHub](https://github.com/LizardByte/Sunshine/issues), include:
+
+- [ ] Sunshine version
+- [ ] Operating system and version
+- [ ] GPU model and driver version
+- [ ] Moonlight client version and platform
+- [ ] Full Sunshine logs (with verbose logging enabled)
+- [ ] Network configuration (local/remote, wired/wireless)
+- [ ] Steps to reproduce the issue
+
+## Additional Resources
+
+- [Performance Tuning Guide](/guides/performance-tuning) - Optimize streaming quality
+- [Application Examples](/guides/app-examples) - Configuration examples
+- [Configuration Reference](/configuration/overview) - All available settings
+- [Discord Community](https://discord.gg/sunshine) - Get help from other users
+- [GitHub Discussions](https://github.com/LizardByte/Sunshine/discussions) - Q&A and feature requests

@@ -1,0 +1,534 @@
+---
+title: Building from Source
+description: Complete guide to building Sunshine from source on all supported platforms
+---
+
+Sunshine uses CMake as its build system and requires CMake version 3.25 or higher. This guide covers building on all supported platforms.
+
+## Prerequisites
+
+### Compiler Requirements
+
+It is recommended to use one of the following compilers:
+
+| Compiler    | Version |
+|:------------|:--------|
+| GCC         | 13+     |
+| Clang       | 17+     |
+| Apple Clang | 15+     |
+
+### Common Tools
+
+All platforms require:
+- **CMake** >= 3.25
+- **Git** (for cloning with submodules)
+- **Ninja** or **Make** (build system)
+- **Node.js** and **npm** (for Web UI)
+
+## Clone the Repository
+
+First, clone the repository with all submodules:
+
+```bash
+git clone https://github.com/LizardByte/Sunshine.git --recurse-submodules
+cd Sunshine
+mkdir build
+```
+
+The `--recurse-submodules` flag is crucial as Sunshine depends on several third-party libraries included as submodules.
+
+## Platform-Specific Dependencies
+
+<AccordionGroup>
+  <Accordion title="Linux" icon="linux">
+    ### Debian/Ubuntu
+
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y \
+      build-essential \
+      cmake \
+      ninja-build \
+      git \
+      libssl-dev \
+      libboost-dev \
+      libboost-filesystem-dev \
+      libboost-locale-dev \
+      libboost-log-dev \
+      libboost-program-options-dev \
+      libboost-thread-dev \
+      libavdevice-dev \
+      libcurl4-openssl-dev \
+      libdrm-dev \
+      libevdev-dev \
+      libpulse-dev \
+      libopus-dev \
+      libxtst-dev \
+      libx11-dev \
+      libxfixes-dev \
+      libxrandr-dev \
+      libxcb1-dev \
+      libxcb-shm0-dev \
+      libxcb-xfixes0-dev \
+      libwayland-dev \
+      wayland-protocols \
+      libva-dev \
+      libvdpau-dev \
+      libminiupnpc-dev \
+      libnotify-dev \
+      libappindicator3-dev \
+      nodejs \
+      npm
+    ```
+
+    ### Fedora
+
+    ```bash
+    sudo dnf install -y \
+      gcc \
+      gcc-c++ \
+      cmake \
+      ninja-build \
+      git \
+      openssl-devel \
+      boost-devel \
+      libcurl-devel \
+      libdrm-devel \
+      libevdev-devel \
+      pulseaudio-libs-devel \
+      opus-devel \
+      libXtst-devel \
+      libX11-devel \
+      libXfixes-devel \
+      libXrandr-devel \
+      libxcb-devel \
+      wayland-devel \
+      wayland-protocols-devel \
+      libva-devel \
+      libvdpau-devel \
+      miniupnpc-devel \
+      libnotify-devel \
+      libappindicator-gtk3-devel \
+      nodejs \
+      npm
+    ```
+
+    ### Arch Linux
+
+    ```bash
+    sudo pacman -S --needed \
+      base-devel \
+      cmake \
+      ninja \
+      git \
+      boost \
+      openssl \
+      opus \
+      libevdev \
+      libpulse \
+      libdrm \
+      libx11 \
+      libxcb \
+      libxfixes \
+      libxrandr \
+      libxtst \
+      wayland \
+      wayland-protocols \
+      libva \
+      libvdpau \
+      miniupnpc \
+      libnotify \
+      libappindicator-gtk3 \
+      nodejs \
+      npm
+    ```
+
+    ### Optional: CUDA Toolkit (for NVFBC capture)
+
+    Sunshine requires CUDA Toolkit for NVIDIA's NvFBC (NVIDIA Framebuffer Capture) feature.
+
+    <Note>
+      The CUDA version you use will determine compatibility with various GPU generations. At the time of writing, CUDA ~12.9 is recommended. See [CUDA compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/index.html) for more info.
+    </Note>
+
+    **Install CUDA:**
+    ```bash
+    # Download from https://developer.nvidia.com/cuda-toolkit-archive
+    # Select your distribution and architecture
+    # Follow NVIDIA's installation instructions
+    ```
+
+    ### KMS Capture Permissions
+
+    If you are using KMS capture, you need to set capabilities on the binary:
+
+    ```bash
+    sudo cp build/sunshine /tmp
+    sudo setcap cap_sys_admin+p /tmp/sunshine
+    sudo getcap /tmp/sunshine
+    sudo mv /tmp/sunshine build/sunshine
+    ```
+
+    <Warning>
+      This is required for KMS capture to work. Some post-install scripts handle this automatically.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Windows" icon="windows">
+    <Warning>
+      Cross-compilation is not supported on Windows. You must build on the target architecture (AMD64 or ARM64).
+    </Warning>
+
+    ### Install MSYS2
+
+    1. Download and install [MSYS2](https://www.msys2.org)
+    2. Launch the appropriate shell:
+       - **AMD64**: MSYS2 UCRT64
+       - **ARM64**: MSYS2 CLANGARM64
+
+    ### Update MSYS2
+
+    ```bash
+    pacman -Syu
+    ```
+
+    Close and reopen the shell, then:
+
+    ```bash
+    pacman -Su
+    ```
+
+    ### Set Toolchain Variable
+
+    <CodeGroup>
+      ```bash UCRT64 (AMD64)
+      export TOOLCHAIN="ucrt-x86_64"
+      ```
+
+      ```bash CLANGARM64 (ARM64)
+      export TOOLCHAIN="clang-aarch64"
+      ```
+    </CodeGroup>
+
+    ### Install Dependencies
+
+    ```bash
+    pacman -S \
+      git \
+      mingw-w64-${TOOLCHAIN}-boost \
+      mingw-w64-${TOOLCHAIN}-cmake \
+      mingw-w64-${TOOLCHAIN}-cppwinrt \
+      mingw-w64-${TOOLCHAIN}-curl-winssl \
+      mingw-w64-${TOOLCHAIN}-miniupnpc \
+      mingw-w64-${TOOLCHAIN}-onevpl \
+      mingw-w64-${TOOLCHAIN}-openssl \
+      mingw-w64-${TOOLCHAIN}-opus \
+      mingw-w64-${TOOLCHAIN}-toolchain
+    ```
+
+    **Additional packages for UCRT64:**
+    ```bash
+    pacman -S \
+      mingw-w64-${TOOLCHAIN}-MinHook \
+      mingw-w64-${TOOLCHAIN}-nodejs \
+      mingw-w64-${TOOLCHAIN}-nsis
+    ```
+
+    **For ARM64:** Install [Node.js](https://nodejs.org/en/download) separately for the Web UI.
+
+    ### Optional: .NET SDK (for WiX installer)
+
+    To create a WiX installer, install the [.NET SDK](https://dotnet.microsoft.com/download).
+  </Accordion>
+
+  <Accordion title="macOS" icon="apple">
+    You can use either Homebrew or MacPorts for dependency management.
+
+    <Tabs>
+      <Tab title="Homebrew">
+        ### Install Homebrew
+
+        If not already installed:
+        ```bash
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        ```
+
+        ### Install Dependencies
+
+        ```bash
+        brew install \
+          boost \
+          cmake \
+          miniupnpc \
+          ninja \
+          node \
+          openssl@3 \
+          opus \
+          pkg-config
+        ```
+
+        ### Optional: Install Documentation Tools
+
+        ```bash
+        brew install doxygen graphviz
+        ```
+
+        ### Fix OpenSSL Headers (if needed)
+
+        <CodeGroup>
+          ```bash Intel
+          ln -s /usr/local/opt/openssl/include/openssl /usr/local/include/openssl
+          ```
+
+          ```bash Apple Silicon
+          ln -s /opt/homebrew/opt/openssl/include/openssl /opt/homebrew/include/openssl
+          ```
+        </CodeGroup>
+      </Tab>
+
+      <Tab title="MacPorts">
+        ### Install MacPorts
+
+        Download and install from [macports.org](https://www.macports.org/install.php).
+
+        ### Install Dependencies
+
+        ```bash
+        sudo port install \
+          cmake \
+          curl \
+          libopus \
+          miniupnpc \
+          ninja \
+          npm9 \
+          pkgconfig
+        ```
+
+        ### Optional: Install Documentation Tools
+
+        ```bash
+        sudo port install doxygen graphviz
+        ```
+      </Tab>
+    </Tabs>
+  </Accordion>
+
+  <Accordion title="FreeBSD" icon="freebsd">
+    <Warning>
+      Sunshine support for FreeBSD is experimental and may be incomplete or not work as expected.
+    </Warning>
+
+    ### Install Dependencies
+
+    ```bash
+    pkg install -y \
+      audio/opus \
+      audio/pulseaudio \
+      devel/cmake \
+      devel/evdev-proto \
+      devel/git \
+      devel/libayatana-appindicator \
+      devel/libevdev \
+      devel/libnotify \
+      devel/ninja \
+      devel/pkgconf \
+      ftp/curl \
+      graphics/libdrm \
+      graphics/wayland \
+      multimedia/libva \
+      net/miniupnpc \
+      ports-mgmt/pkg \
+      security/openssl \
+      shells/bash \
+      www/npm \
+      x11/libX11 \
+      x11/libxcb \
+      x11/libXfixes \
+      x11/libXrandr \
+      x11/libXtst
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Build Instructions
+
+### Basic Build
+
+Once dependencies are installed:
+
+```bash
+cmake -B build -G Ninja -S .
+ninja -C build
+```
+
+### Build with Custom Options
+
+CMake options can be specified with `-D` flags:
+
+```bash
+cmake -B build -G Ninja -S . \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_TESTS=ON \
+  -DBUILD_DOCS=OFF \
+  -DSUNSHINE_ENABLE_TRAY=ON
+ninja -C build
+```
+
+## CMake Build Options
+
+Sunshine provides numerous build options in `cmake/prep/options.cmake`:
+
+### Common Options
+
+| Option | Default | Description |
+|:-------|:--------|:------------|
+| `BUILD_DOCS` | ON | Build Doxygen documentation |
+| `BUILD_TESTS` | ON | Build unit tests |
+| `BUILD_WERROR` | OFF | Treat compiler warnings as errors |
+| `SUNSHINE_ENABLE_TRAY` | ON | Enable system tray icon |
+| `NPM_OFFLINE` | OFF | Use offline npm packages |
+| `BOOST_USE_STATIC` | ON (OFF on macOS) | Use static Boost libraries |
+
+### Linux-Specific Options
+
+| Option | Default | Description |
+|:-------|:--------|:------------|
+| `SUNSHINE_ENABLE_CUDA` | ON | Enable CUDA/NVENC support |
+| `SUNSHINE_ENABLE_DRM` | ON | Enable KMS/DRM capture |
+| `SUNSHINE_ENABLE_VAAPI` | ON | Enable VAAPI encoding |
+| `SUNSHINE_ENABLE_WAYLAND` | ON | Enable Wayland capture |
+| `SUNSHINE_ENABLE_X11` | ON | Enable X11 capture |
+| `SUNSHINE_ENABLE_PORTAL` | ON | Enable XDG Desktop Portal capture |
+| `SUNSHINE_BUILD_APPIMAGE` | OFF | Build for AppImage packaging |
+| `SUNSHINE_BUILD_FLATPAK` | OFF | Build for Flatpak packaging |
+
+### Publisher Options
+
+For custom builds, you can set publisher metadata:
+
+| Option | Description |
+|:-------|:------------|
+| `SUNSHINE_PUBLISHER_NAME` | Publisher name |
+| `SUNSHINE_PUBLISHER_WEBSITE` | Publisher website URL |
+| `SUNSHINE_PUBLISHER_ISSUE_URL` | Support/issue tracker URL |
+
+**Example:**
+```bash
+cmake -B build -G Ninja -S . \
+  -DSUNSHINE_PUBLISHER_NAME="My Company" \
+  -DSUNSHINE_PUBLISHER_WEBSITE="https://example.com" \
+  -DSUNSHINE_PUBLISHER_ISSUE_URL="https://example.com/support"
+```
+
+## Creating Packages
+
+Sunshine uses CPack for package creation.
+
+<CodeGroup>
+  ```bash Linux (DEB)
+  cpack -G DEB --config ./build/CPackConfig.cmake
+  ```
+
+  ```bash Linux (RPM)
+  cpack -G RPM --config ./build/CPackConfig.cmake
+  ```
+
+  ```bash FreeBSD (pkg)
+  cpack -G FREEBSD --config ./build/CPackConfig.cmake
+  ```
+
+  ```bash macOS (DMG)
+  cpack -G DragNDrop --config ./build/CPackConfig.cmake
+  ```
+
+  ```bash Windows (NSIS)
+  cpack -G NSIS --config ./build/CPackConfig.cmake
+  ```
+
+  ```bash Windows (WiX)
+  cpack -G WIX --config ./build/CPackConfig.cmake
+  ```
+
+  ```bash Windows (Portable)
+  cpack -G ZIP --config ./build/CPackConfig.cmake
+  ```
+</CodeGroup>
+
+## Remote Build (GitHub Actions)
+
+You can build Sunshine remotely using GitHub Actions:
+
+1. Fork the [Sunshine repository](https://github.com/LizardByte/Sunshine)
+2. Go to the **Actions** tab in your fork
+3. Enable workflows if prompted
+4. Manually trigger the **CI** workflow
+5. Download artifacts from the workflow run summary
+
+This is useful for:
+- Building on platforms you don't have access to
+- Testing cross-platform compatibility
+- Creating release packages
+
+## Build Troubleshooting
+
+### CMake Version Issues
+
+If your system's CMake is too old:
+
+```bash
+# Download a newer CMake binary
+wget https://github.com/Kitware/CMake/releases/download/v3.30.1/cmake-3.30.1-linux-x86_64.tar.gz
+tar xzf cmake-3.30.1-linux-x86_64.tar.gz
+export PATH="$(pwd)/cmake-3.30.1-linux-x86_64/bin:$PATH"
+```
+
+### Submodule Issues
+
+If you forgot to clone with `--recurse-submodules`:
+
+```bash
+git submodule update --init --recursive
+```
+
+### Build Failures
+
+1. **Clean build directory:**
+   ```bash
+   rm -rf build
+   mkdir build
+   ```
+
+2. **Check compiler version:**
+   ```bash
+   gcc --version  # or clang --version
+   ```
+
+3. **Verify all dependencies are installed:**
+   ```bash
+   cmake -B build -G Ninja -S . --debug-find
+   ```
+
+### Node.js/npm Issues
+
+If Web UI build fails:
+
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Rebuild Web UI separately
+cd src_assets/common/assets/web
+npm install
+npm run build
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Learn about Sunshine's internal architecture
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Start contributing to the project
+  </Card>
+</CardGroup>

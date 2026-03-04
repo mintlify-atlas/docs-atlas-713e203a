@@ -1,0 +1,500 @@
+---
+title: Application Configuration
+description: Add and configure applications and games for streaming
+---
+
+Applications allow you to launch games and programs directly from Moonlight. Each application can have custom commands, working directories, and preparation commands.
+
+## Adding Applications
+
+Applications are configured through the Sunshine Web UI or by editing the `apps.json` file.
+
+### Via Web UI (Recommended)
+
+1. Open Sunshine Web UI at `https://localhost:47990`
+2. Navigate to **Applications** or **Configuration > Applications**
+3. Click **Add New** or similar button
+4. Fill in the application details
+5. Save the application
+
+### Via apps.json File
+
+The `apps.json` file is located in your Sunshine configuration directory. It contains a JSON array of application objects.
+
+<Warning>
+Manually editing JSON requires valid syntax. Use the Web UI to avoid errors.
+</Warning>
+
+## Application Fields
+
+<ParamField path="name" type="string" required>
+  The display name shown in Moonlight.
+
+  ```json
+  "name": "Desktop"
+  ```
+</ParamField>
+
+<ParamField path="cmd" type="string" required>
+  The command or executable to launch.
+
+  ```json
+  "cmd": "C:\\Program Files\\Steam\\steam.exe"
+  ```
+</ParamField>
+
+<ParamField path="output" type="string">
+  Log file path for application output (useful for debugging).
+
+  ```json
+  "output": "steam.log"
+  ```
+</ParamField>
+
+<ParamField path="working-dir" type="string">
+  Working directory for the application. Defaults to the executable's directory if not specified.
+
+  ```json
+  "working-dir": "C:\\Program Files\\Steam"
+  ```
+</ParamField>
+
+<ParamField path="detached" type="array">
+  Commands to run detached (don't wait for completion). Useful for launchers that spawn child processes.
+
+  ```json
+  "detached": ["steam://open/bigpicture"]
+  ```
+</ParamField>
+
+<ParamField path="image-path" type="string">
+  Path or URL to cover image displayed in Moonlight.
+
+  ```json
+  "image-path": "desktop.png"
+  ```
+</ParamField>
+
+<ParamField path="elevated" type="boolean">
+  Run with elevated privileges (Windows only, requires Sunshine service).
+
+  ```json
+  "elevated": false
+  ```
+</ParamField>
+
+<ParamField path="exclude-global-prep-cmd" type="boolean">
+  Skip global prep commands for this application.
+
+  ```json
+  "exclude-global-prep-cmd": false
+  ```
+</ParamField>
+
+<ParamField path="prep-cmd" type="array">
+  Commands to run before/after launching the application.
+
+  Each entry can have:
+  - `do` - Command to run before launch
+  - `undo` - Command to run after exit
+  - `elevated` - Run with elevated privileges (Windows)
+
+  ```json
+  "prep-cmd": [
+    {
+      "do": "cmd /C \"FullPath\\qres.exe /x:1920 /y:1080\"",
+      "undo": "cmd /C \"FullPath\\qres.exe /x:2560 /y:1440\""
+    }
+  ]
+  ```
+</ParamField>
+
+## Common Application Examples
+
+### Desktop
+
+<CodeGroup>
+```json Basic Desktop
+{
+  "name": "Desktop",
+  "output": "",
+  "cmd": "",
+  "image-path": "desktop.png"
+}
+```
+</CodeGroup>
+
+### Steam Big Picture
+
+<Tabs>
+  <Tab title="Windows">
+    ```json
+    {
+      "name": "Steam Big Picture",
+      "output": "",
+      "detached": ["steam://open/bigpicture"],
+      "prep-cmd": [
+        {
+          "undo": "steam://close/bigpicture"
+        }
+      ],
+      "image-path": "steam.png"
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Linux/FreeBSD">
+    ```json
+    {
+      "name": "Steam Big Picture",
+      "output": "",
+      "detached": ["setsid steam steam://open/bigpicture"],
+      "prep-cmd": [
+        {
+          "undo": "setsid steam steam://close/bigpicture"
+        }
+      ],
+      "image-path": "steam.png"
+    }
+    ```
+  </Tab>
+  
+  <Tab title="macOS">
+    ```json
+    {
+      "name": "Steam Big Picture",
+      "output": "",
+      "detached": ["open steam://open/bigpicture"],
+      "prep-cmd": [
+        {
+          "undo": "open steam://close/bigpicture"
+        }
+      ],
+      "image-path": "steam.png"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Steam Game (URI Method)
+
+<Tabs>
+  <Tab title="Windows">
+    ```json
+    {
+      "name": "Surviving Mars",
+      "output": "",
+      "detached": ["steam://rungameid/464920"],
+      "image-path": "surviving-mars.png"
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Linux/FreeBSD">
+    ```json
+    {
+      "name": "Surviving Mars",
+      "output": "",
+      "detached": ["setsid steam steam://rungameid/464920"],
+      "image-path": "surviving-mars.png"
+    }
+    ```
+  </Tab>
+  
+  <Tab title="macOS">
+    ```json
+    {
+      "name": "Surviving Mars",
+      "output": "",
+      "detached": ["open steam://rungameid/464920"],
+      "image-path": "surviving-mars.png"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Steam Game (Direct Executable)
+
+<Tabs>
+  <Tab title="Windows">
+    ```json
+    {
+      "name": "Surviving Mars",
+      "output": "",
+      "cmd": "MarsSteam.exe",
+      "working-dir": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Surviving Mars",
+      "image-path": "surviving-mars.png"
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Linux">
+    ```json
+    {
+      "name": "Surviving Mars",
+      "output": "",
+      "cmd": "MarsSteam",
+      "working-dir": "~/.steam/steam/SteamApps/common/Surviving Mars",
+      "image-path": "surviving-mars.png"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Epic Games Store Game
+
+```json
+{
+  "name": "Surviving Mars",
+  "output": "",
+  "cmd": "com.epicgames.launcher://apps/d759128018124dcabb1fbee9bb28e178%3A20729b9176c241f0b617c5723e70ec2d%3AOvenbird?action=launch&silent=true",
+  "image-path": "surviving-mars.png"
+}
+```
+
+## Preparation Commands
+
+Preparation commands allow you to change system settings before launching an application and restore them afterward.
+
+### Change Resolution and Refresh Rate
+
+<Tabs>
+  <Tab title="Windows (Built-in)">
+    Sunshine has built-in Windows display configuration. See the [Audio/Video Configuration](/configuration/audio-video) page for Windows-specific settings like `dd_resolution_option` and `dd_refresh_rate_option`.
+  </Tab>
+  
+  <Tab title="Windows (QRes)">
+    Using the [QRes tool](https://sourceforge.net/projects/qres):
+
+    ```json
+    "prep-cmd": [
+      {
+        "do": "cmd /C \"C:\\Tools\\qres.exe /x:%SUNSHINE_CLIENT_WIDTH% /y:%SUNSHINE_CLIENT_HEIGHT% /r:%SUNSHINE_CLIENT_FPS%\"",
+        "undo": "C:\\Tools\\qres.exe /x:2560 /y:1440 /r:144"
+      }
+    ]
+    ```
+  </Tab>
+  
+  <Tab title="Linux (X11)">
+    ```json
+    "prep-cmd": [
+      {
+        "do": "sh -c \"xrandr --output HDMI-1 --mode ${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT} --rate ${SUNSHINE_CLIENT_FPS}\"",
+        "undo": "xrandr --output HDMI-1 --mode 3840x2160 --rate 120"
+      }
+    ]
+    ```
+  </Tab>
+  
+  <Tab title="Linux (Wayland)">
+    Using wlr-xrandr for wlroots compositors:
+
+    ```json
+    "prep-cmd": [
+      {
+        "do": "sh -c \"wlr-xrandr --output HDMI-1 --mode ${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT}@${SUNSHINE_CLIENT_FPS}Hz\"",
+        "undo": "wlr-xrandr --output HDMI-1 --mode 3840x2160@120Hz"
+      }
+    ]
+    ```
+  </Tab>
+  
+  <Tab title="macOS">
+    Using [displayplacer](https://github.com/jakehilborn/displayplacer):
+
+    ```json
+    "prep-cmd": [
+      {
+        "do": "sh -c \"displayplacer \\\"id:<screenId> res:${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT} hz:${SUNSHINE_CLIENT_FPS} scaling:on origin:(0,0) degree:0\\\"\"",
+        "undo": "displayplacer \"id:<screenId> res:3840x2160 hz:120 scaling:on origin:(0,0) degree:0\""
+      }
+    ]
+    ```
+  </Tab>
+</Tabs>
+
+## Environment Variables
+
+Sunshine provides environment variables you can use in commands:
+
+<ParamField path="SUNSHINE_CLIENT_WIDTH" type="number">
+  Resolution width requested by the client
+</ParamField>
+
+<ParamField path="SUNSHINE_CLIENT_HEIGHT" type="number">
+  Resolution height requested by the client
+</ParamField>
+
+<ParamField path="SUNSHINE_CLIENT_FPS" type="number">
+  Frame rate requested by the client
+</ParamField>
+
+<ParamField path="SUNSHINE_CLIENT_HDR" type="string">
+  Whether client requested HDR ("true" or "false")
+</ParamField>
+
+## Cover Images
+
+Cover images are displayed in the Moonlight app selection screen.
+
+### Image Format
+- Supported formats: PNG, JPG, JPEG
+- Recommended size: 1280x720 or 1920x1080
+- Aspect ratio: 16:9
+
+### Image Location
+
+**Relative Paths:**
+Place images in the Sunshine configuration directory:
+```json
+"image-path": "steam.png"
+```
+
+**Absolute Paths:**
+```json
+"image-path": "C:\\Images\\steam.png"
+```
+
+**URLs:**
+```json
+"image-path": "https://example.com/images/game-cover.jpg"
+```
+
+## Platform-Specific Considerations
+
+### Windows
+
+<Accordion title="Elevated Privileges">
+  If Sunshine is installed as a service (default), you can run applications with administrator privileges:
+
+  ```json
+  {
+    "name": "Game With AntiCheat",
+    "cmd": "game.exe",
+    "elevated": true
+  }
+  ```
+
+  This launches without UAC prompt when using Sunshine service.
+</Accordion>
+
+<Accordion title="Path Escaping">
+  Use double backslashes in JSON:
+  ```json
+  "cmd": "C:\\Program Files\\Game\\game.exe"
+  ```
+</Accordion>
+
+### Linux (Flatpak)
+
+<Warning>
+Flatpak runs in a sandbox. Commands must be prefixed with `flatpak-spawn --host`:
+
+```json
+"cmd": "flatpak-spawn --host steam"
+```
+</Warning>
+
+### macOS
+
+<Note>
+Use `open` command for applications and URLs:
+
+```json
+"cmd": "open -a \"Game Name\""
+```
+</Note>
+
+## Complete Example
+
+Here's a complete application configuration with resolution changes:
+
+```json
+{
+  "name": "Cyberpunk 2077",
+  "output": "cyberpunk.log",
+  "cmd": "steam://rungameid/1091500",
+  "detached": ["steam://rungameid/1091500"],
+  "exclude-global-prep-cmd": false,
+  "elevated": false,
+  "prep-cmd": [
+    {
+      "do": "cmd /C \"C:\\Tools\\qres.exe /x:%SUNSHINE_CLIENT_WIDTH% /y:%SUNSHINE_CLIENT_HEIGHT% /r:%SUNSHINE_CLIENT_FPS%\"",
+      "undo": "C:\\Tools\\qres.exe /x:2560 /y:1440 /r:144",
+      "elevated": false
+    }
+  ],
+  "image-path": "cyberpunk2077.png"
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Application won't launch">
+    - Check `output` log for errors
+    - Verify executable path and working directory
+    - Test command manually in terminal
+    - Check if elevated privileges are needed
+  </Accordion>
+  
+  <Accordion title="Wrong resolution">
+    - Verify prep-cmd syntax
+    - Check environment variables are available
+    - Enable "Optimize game settings" in Moonlight
+    - Test prep-cmd manually
+  </Accordion>
+  
+  <Accordion title="Steam games don't launch">
+    - Use URI method: `steam://rungameid/<appid>`
+    - Add to detached commands
+    - Ensure Steam is running
+    - Check game AppID is correct
+  </Accordion>
+  
+  <Accordion title="Cover image not showing">
+    - Check image path is correct
+    - Verify image format (PNG/JPG)
+    - Use absolute path or URL
+    - Restart Moonlight client
+  </Accordion>
+  
+  <Accordion title="Prep commands fail">
+    - Check command syntax
+    - Test commands manually
+    - Verify tools are installed
+    - Check elevated permissions if needed
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use URI Methods" icon="link">
+    For Steam/Epic games, use launcher URIs instead of direct executables for better compatibility
+  </Card>
+  
+  <Card title="Test Commands" icon="terminal">
+    Always test prep commands manually before adding to configuration
+  </Card>
+  
+  <Card title="Add Logging" icon="file-lines">
+    Use the `output` field to capture logs for troubleshooting
+  </Card>
+  
+  <Card title="Environment Variables" icon="dollar-sign">
+    Use `SUNSHINE_CLIENT_*` variables for dynamic resolution changes
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="General Settings" icon="gear" href="/configuration/general">
+    Configure global prep commands
+  </Card>
+  <Card title="Audio/Video" icon="video" href="/configuration/audio-video">
+    Optimize streaming quality for your applications
+  </Card>
+</CardGroup>

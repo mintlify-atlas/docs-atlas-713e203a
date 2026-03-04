@@ -1,0 +1,238 @@
+---
+title: Development Overview
+description: Introduction to Sunshine development, project structure, and getting started with contributing
+---
+
+Sunshine is a self-hosted game stream host for Moonlight, built with modern C++ and designed for cross-platform compatibility. This guide will help you understand the project structure and get started with development.
+
+## What is Sunshine?
+
+Sunshine offers low-latency, cloud gaming server capabilities with support for AMD, Intel, and Nvidia GPUs for hardware encoding. Software encoding is also available. You can connect to Sunshine from any Moonlight client on a variety of devices. A web UI is provided to allow configuration and client pairing from your favorite web browser.
+
+## Technology Stack
+
+### Core Technologies
+
+**Backend**
+- **Language**: C++ (requires C++17 or later)
+- **Build System**: CMake (>= 3.25)
+- **Compilers**: GCC 13+, Clang 17+, or Apple Clang 15+
+- **Key Libraries**:
+  - Boost (filesystem, locale, log)
+  - OpenSSL (cryptography)
+  - FFmpeg (video/audio encoding)
+  - libopus (audio codec)
+  - miniupnpc (UPnP support)
+
+**Frontend (Web UI)**
+- **Framework**: Vue.js 3
+- **Build Tool**: Vite
+- **Templating**: EJS
+- **Styling**: Bootstrap 5
+- **Icons**: Lucide and Simple Icons
+
+**Platform-Specific Technologies**
+- **Linux**: VAAPI, KMS/DRM, X11, Wayland, CUDA (optional)
+- **Windows**: DirectX, DXGI, Windows.Graphics.Capture, NVENC
+- **macOS**: Video Toolbox, AVFoundation
+- **FreeBSD**: Wayland, X11
+
+## Project Structure
+
+The Sunshine repository is organized as follows:
+
+```
+sunshine/
+├── cmake/                    # CMake build configuration
+│   ├── dependencies/         # Dependency management
+│   ├── packaging/            # Package generation scripts
+│   └── prep/                 # Build preparation scripts
+├── docs/                     # Documentation source files
+├── scripts/                  # Build and utility scripts
+│   └── linux_build.sh        # Comprehensive Linux build script
+├── src/                      # Main source code
+│   ├── platform/             # Platform-specific implementations
+│   │   ├── linux/            # Linux-specific code
+│   │   │   ├── input/        # Input handling
+│   │   │   ├── cuda.cpp      # CUDA/NVENC support
+│   │   │   ├── kmsgrab.cpp   # KMS capture
+│   │   │   ├── vaapi.cpp     # VAAPI encoding
+│   │   │   ├── wayland.cpp   # Wayland capture
+│   │   │   └── x11grab.cpp   # X11 capture
+│   │   ├── windows/          # Windows-specific code
+│   │   │   ├── display_*.cpp # Display capture variants
+│   │   │   ├── input.cpp     # Input emulation
+│   │   │   └── nvprefs/      # NVIDIA settings
+│   │   └── macos/            # macOS-specific code
+│   │       ├── av_video.m    # AVFoundation capture
+│   │       ├── display.mm    # Display management
+│   │       └── input.cpp     # Input handling
+│   ├── audio.cpp             # Audio capture/streaming
+│   ├── video.cpp             # Video capture/encoding
+│   ├── stream.cpp            # Streaming protocol
+│   ├── network.cpp           # Network handling
+│   ├── input.cpp             # Input processing
+│   ├── config.cpp            # Configuration management
+│   ├── confighttp.cpp        # Web UI backend
+│   ├── nvhttp.cpp            # NVIDIA GameStream protocol
+│   ├── rtsp.cpp              # RTSP server
+│   ├── process.cpp           # Process management
+│   ├── crypto.cpp            # Encryption/authentication
+│   └── main.cpp              # Application entry point
+├── src_assets/               # Asset files
+│   └── common/assets/web/    # Web UI source
+├── tests/                    # Unit and integration tests
+└── third-party/              # Git submodules for dependencies
+```
+
+## Key Components
+
+Understanding the main components will help you navigate the codebase:
+
+### Core Systems
+
+- **main.cpp** (`src/main.cpp:1`): Application entry point, initialization, and command-line handling
+- **config.cpp** (`src/config.cpp:1`): Configuration parsing and management
+- **process.cpp** (`src/process.cpp:1`): Application lifecycle and process management
+
+### Streaming Pipeline
+
+- **nvhttp.cpp** (`src/nvhttp.cpp:1`): NVIDIA GameStream-compatible HTTP server
+- **rtsp.cpp** (`src/rtsp.cpp:1`): RTSP session management
+- **stream.cpp** (`src/stream.cpp:1`): Main streaming logic and session handling
+- **video.cpp** (`src/video.cpp:1`): Video capture and encoding
+- **audio.cpp** (`src/audio.cpp:1`): Audio capture and streaming
+
+### Platform Abstraction
+
+- **platform/common.h** (`src/platform/common.h:1`): Platform interface definitions
+- **platform/linux/** (`src/platform/linux/`): Linux implementations (X11, Wayland, KMS, CUDA)
+- **platform/windows/** (`src/platform/windows/`): Windows implementations (DXGI, WGC)
+- **platform/macos/** (`src/platform/macos/`): macOS implementations (Video Toolbox)
+
+### Web UI
+
+- **confighttp.cpp** (`src/confighttp.cpp:1`): REST API backend for web interface
+- **src_assets/common/assets/web/**: Vue.js frontend application
+
+## Getting Started with Development
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/LizardByte/Sunshine.git --recurse-submodules
+cd Sunshine
+```
+
+The `--recurse-submodules` flag is important as Sunshine uses several git submodules for third-party dependencies.
+
+### 2. Install Dependencies
+
+Dependencies vary by platform. See the [Building from Source](/development/building) guide for detailed platform-specific instructions.
+
+### 3. Build the Project
+
+```bash
+mkdir build
+cmake -B build -G Ninja -S .
+ninja -C build
+```
+
+### 4. Run Tests
+
+If built with `BUILD_TESTS=ON` (default):
+
+```bash
+./build/tests/test_sunshine
+```
+
+### 5. Run the Application
+
+```bash
+./build/sunshine
+```
+
+## Development Workflow
+
+### Code Style
+
+Sunshine uses `clang-format` for code formatting. The configuration is in `.clang-format` at the repository root.
+
+**Format your code before committing:**
+
+```bash
+find ./ -iname *.cpp -o -iname *.h -iname *.m -iname *.mm | xargs clang-format -i
+```
+
+Or use the Python helper script:
+
+```bash
+python ./scripts/update_clang_format.py
+```
+
+### Web UI Development
+
+The Web UI can be developed independently:
+
+**Using CMake:**
+```bash
+cmake -B build -G Ninja -S . --target web-ui
+ninja -C build web-ui
+```
+
+**Using npm directly:**
+```bash
+cd src_assets/common/assets/web
+npm run dev
+```
+
+### Debugging
+
+Build in Debug mode for better debugging symbols:
+
+```bash
+cmake -B build -G Ninja -S . -DCMAKE_BUILD_TYPE=Debug
+ninja -C build
+```
+
+Recommended IDEs:
+- **CLion**: Full-featured C++ IDE from JetBrains
+- **Visual Studio Code**: With C++ and CMake extensions
+- **Visual Studio**: On Windows with CMake support
+
+## Documentation
+
+Sunshine uses Doxygen for API documentation. Build docs with:
+
+```bash
+cmake -B build -G Ninja -S . -DBUILD_DOCS=ON
+ninja -C build docs
+```
+
+Generated documentation will be in `build/docs/html/`.
+
+## Community and Support
+
+For development questions and discussions:
+
+- **GitHub Issues**: [Report bugs and request features](https://github.com/LizardByte/Sunshine/issues)
+- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/LizardByte/Sunshine/discussions)
+- **Discord**: Join the LizardByte community server
+- **Documentation**: [Official docs](https://docs.lizardbyte.dev/projects/sunshine)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Building from Source" icon="hammer" href="/development/building">
+    Learn how to build Sunshine on your platform
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Understand the system architecture and design
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Learn how to contribute code and documentation
+  </Card>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/LizardByte/Sunshine">
+    View the source code on GitHub
+  </Card>
+</CardGroup>

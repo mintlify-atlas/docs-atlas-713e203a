@@ -1,0 +1,126 @@
+---
+title: Configuration Overview
+description: Learn how to configure Sunshine using the web UI or configuration files
+---
+
+Sunshine works with default settings for most users, but offers extensive configuration options when you need more control over streaming behavior, performance, and compatibility.
+
+## Accessing Configuration
+
+### Web UI (Recommended)
+
+The easiest way to configure Sunshine is through the web interface:
+
+1. Open your web browser
+2. Navigate to `https://localhost:47990`
+3. Log in with your credentials
+4. Browse the configuration sections in the UI
+
+The web UI provides a user-friendly interface for all configuration options with descriptions and validation.
+
+### Configuration Files
+
+For advanced users, Sunshine can be configured by editing configuration files directly. The configuration file is located in different directories depending on your operating system:
+
+| Operating System | Configuration Directory |
+|-----------------|------------------------|
+| Docker | `/config` |
+| FreeBSD | `~/.config/sunshine` |
+| Linux | `~/.config/sunshine` |
+| macOS | `~/.config/sunshine` |
+| Windows | `%ProgramFiles%\Sunshine\config` |
+
+The main configuration file is `sunshine.conf` in this directory.
+
+## Custom Configuration Path
+
+You can specify a custom configuration file location by passing the full path as the first argument when starting Sunshine:
+
+```bash
+sunshine ~/my-custom-config/sunshine.conf
+```
+
+## Application Configuration
+
+Applications that can be launched from Moonlight are configured separately in `apps.json`, which is stored in the same directory as the configuration file by default. You can customize this location in the main configuration file.
+
+## Configuration Sections
+
+Sunshine's configuration is organized into several categories:
+
+<CardGroup cols={2}>
+  <Card title="General Settings" icon="gear" href="/configuration/general">
+    Locale, logging, credentials, and system tray options
+  </Card>
+  <Card title="Audio/Video" icon="video" href="/configuration/audio-video">
+    Encoder selection, resolution, bitrate, and HDR settings
+  </Card>
+  <Card title="Input Configuration" icon="gamepad" href="/configuration/input">
+    Gamepad emulation, keyboard, and mouse settings
+  </Card>
+  <Card title="Network Settings" icon="network-wired" href="/configuration/network">
+    Port configuration, UPnP, and encryption settings
+  </Card>
+  <Card title="Applications" icon="window" href="/configuration/apps">
+    Configure applications and games to stream
+  </Card>
+</CardGroup>
+
+## Editing Configuration Files
+
+<Warning>
+While you can manually edit the configuration file, it's recommended to use the web UI to avoid syntax errors and ensure valid values.
+</Warning>
+
+If you choose to edit configuration files manually:
+
+1. Stop Sunshine before making changes
+2. Open `sunshine.conf` in a text editor
+3. Edit the desired options using the format: `option_name = value`
+4. Save the file
+5. Restart Sunshine for changes to take effect
+
+## Configuration File Locations
+
+### Main Configuration Files
+
+<ParamField path="sunshine.conf" type="file">
+  Main configuration file containing all Sunshine settings
+</ParamField>
+
+<ParamField path="apps.json" type="file">
+  Application definitions for games and programs that can be launched from Moonlight
+</ParamField>
+
+<ParamField path="sunshine_state.json" type="file">
+  Current state and user credentials for the web UI
+</ParamField>
+
+### Log Files
+
+<ParamField path="sunshine.log" type="file">
+  Main log file for troubleshooting and debugging
+</ParamField>
+
+### SSL Certificates
+
+Located in the `credentials` subdirectory:
+
+<ParamField path="credentials/cakey.pem" type="file">
+  Private key for web UI and Moonlight pairing (RSA-2048 recommended)
+</ParamField>
+
+<ParamField path="credentials/cacert.pem" type="file">
+  Certificate for web UI and Moonlight pairing
+</ParamField>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="General Settings" icon="gear" href="/configuration/general">
+    Configure locale, logging, and system settings
+  </Card>
+  <Card title="Audio/Video" icon="video" href="/configuration/audio-video">
+    Optimize encoding settings for your hardware
+  </Card>
+</CardGroup>

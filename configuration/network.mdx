@@ -1,0 +1,392 @@
+---
+title: Network Configuration
+description: Configure ports, UPnP, encryption, and network access settings
+---
+
+Network configuration controls how Sunshine communicates with Moonlight clients, including port settings, encryption, and access restrictions.
+
+## Port Configuration
+
+<ParamField path="port" type="number" default="47989">
+  Base port for the Sunshine service. Other ports are automatically offset from this value.
+
+  **Port Range:** 1029-65514
+
+  **Default Ports:**
+  - 47989 - Base port
+  - 47990 - HTTPS Web UI
+  - 48010 - Video/Audio streaming
+
+  ```bash
+  port = 47989
+  ```
+
+  <Warning>
+  Changing the port will offset all other Sunshine ports accordingly.
+  </Warning>
+</ParamField>
+
+## Network Interface Binding
+
+<ParamField path="address_family" type="string" default="ipv4">
+  Set the address family that Sunshine will use.
+
+  **Options:**
+  - `ipv4` - IPv4 only
+  - `both` - IPv4 and IPv6
+
+  ```bash
+  address_family = both
+  ```
+</ParamField>
+
+<ParamField path="bind_address" type="string" default="All interfaces">
+  Bind Sunshine to a specific IP address. Leave empty to bind to all interfaces.
+
+  Useful for systems with multiple network interfaces when you want to restrict Sunshine to one.
+
+  <Tabs>
+    <Tab title="IPv4">
+      ```bash
+      bind_address = 192.168.1.100
+      ```
+    </Tab>
+    
+    <Tab title="IPv6">
+      ```bash
+      bind_address = 2001:db8::1
+      ```
+    </Tab>
+    
+    <Tab title="Loopback">
+      ```bash
+      bind_address = 127.0.0.1
+      ```
+    </Tab>
+  </Tabs>
+
+  <Note>
+  The address must be valid for the system and match the configured address family.
+  </Note>
+</ParamField>
+
+## UPnP and External Access
+
+<ParamField path="upnp" type="boolean" default="disabled">
+  Automatically open ports for streaming over the internet using UPnP.
+
+  ```bash
+  upnp = enabled
+  ```
+
+  <Warning>
+  Only enable if you need remote streaming over the internet and your router supports UPnP.
+  </Warning>
+</ParamField>
+
+<ParamField path="external_ip" type="string" default="Auto-detect">
+  Manually specify external IP address. Leave empty for automatic detection.
+
+  ```bash
+  external_ip = 123.456.789.12
+  ```
+</ParamField>
+
+## Web UI Access Control
+
+<ParamField path="origin_web_ui_allowed" type="string" default="lan">
+  Control which devices can access the HTTPS Web UI.
+
+  **Options:**
+  - `pc` - Only localhost can access
+  - `lan` - Only LAN devices can access  
+  - `wan` - Anyone can access (not recommended)
+
+  ```bash
+  origin_web_ui_allowed = lan
+  ```
+
+  <Warning>
+  Setting to `wan` exposes your Web UI to the internet. Ensure you have a strong password.
+  </Warning>
+</ParamField>
+
+## Encryption Settings
+
+<ParamField path="lan_encryption_mode" type="number" default="0">
+  Encryption mode for streaming over local network.
+
+  **Options:**
+  - `0` - No encryption (best performance)
+  - `1` - Encryption if client supports it
+  - `2` - Encryption mandatory (reject unencrypted)
+
+  ```bash
+  lan_encryption_mode = 0
+  ```
+
+  <Warning>
+  Encryption can reduce streaming performance, especially on less powerful hardware.
+  </Warning>
+</ParamField>
+
+<ParamField path="wan_encryption_mode" type="number" default="1">
+  Encryption mode for streaming over the internet.
+
+  **Options:**
+  - `0` - No encryption (not recommended)
+  - `1` - Encryption if client supports it (recommended)
+  - `2` - Encryption mandatory
+
+  ```bash
+  wan_encryption_mode = 1
+  ```
+
+  <Tip>
+  It's recommended to use encryption for internet streaming to protect your data.
+  </Tip>
+</ParamField>
+
+## Connection Timeouts
+
+<ParamField path="ping_timeout" type="number" default="10000">
+  How long to wait (in milliseconds) for data from Moonlight before shutting down the stream.
+
+  ```bash
+  ping_timeout = 10000
+  ```
+</ParamField>
+
+## Example Configurations
+
+### Local Network Only (Default)
+
+```bash
+# Ports
+port = 47989
+
+# Network
+address_family = ipv4
+upnp = disabled
+
+# Access Control
+origin_web_ui_allowed = lan
+
+# Encryption
+lan_encryption_mode = 0
+wan_encryption_mode = 1
+
+# Timeouts
+ping_timeout = 10000
+```
+
+### Internet Streaming with UPnP
+
+```bash
+# Ports
+port = 47989
+
+# Enable UPnP for automatic port forwarding
+upnp = enabled
+
+# Optional: Set external IP manually
+# external_ip = 123.456.789.12
+
+# Access Control
+origin_web_ui_allowed = lan
+
+# Encryption (recommended for internet)
+lan_encryption_mode = 1
+wan_encryption_mode = 2
+
+# Timeouts
+ping_timeout = 15000
+```
+
+### IPv6 Dual Stack
+
+```bash
+# Ports
+port = 47989
+
+# Enable both IPv4 and IPv6
+address_family = both
+
+# Optional: Bind to specific IPv6 address
+# bind_address = 2001:db8::1
+
+# Network
+upnp = disabled
+
+# Access Control
+origin_web_ui_allowed = lan
+
+# Encryption
+lan_encryption_mode = 0
+wan_encryption_mode = 1
+```
+
+### Restricted to Specific Interface
+
+```bash
+# Ports
+port = 47989
+
+# Bind to specific network interface
+bind_address = 192.168.1.100
+address_family = ipv4
+
+# Network
+upnp = disabled
+
+# Access Control (localhost only)
+origin_web_ui_allowed = pc
+
+# Encryption
+lan_encryption_mode = 0
+wan_encryption_mode = 1
+```
+
+### Maximum Security
+
+```bash
+# Ports
+port = 47989
+
+# Network
+address_family = ipv4
+upnp = disabled
+
+# Access Control (LAN only)
+origin_web_ui_allowed = lan
+
+# Mandatory encryption everywhere
+lan_encryption_mode = 2
+wan_encryption_mode = 2
+
+# Shorter timeout
+ping_timeout = 8000
+```
+
+## Firewall Configuration
+
+If you're having connection issues, ensure these ports are open in your firewall:
+
+<Tabs>
+  <Tab title="Default Ports">
+    - **TCP 47984-47990** - HTTP/HTTPS and control
+    - **UDP 47998-48000** - Video stream  
+    - **UDP 48010** - Audio stream
+    - **UDP 48100-48110** - Control and input
+  </Tab>
+  
+  <Tab title="Windows Firewall">
+    Sunshine installer typically configures Windows Firewall automatically.
+
+    To manually add rules:
+    ```powershell
+    New-NetFirewallRule -DisplayName "Sunshine" -Direction Inbound -Program "C:\Program Files\Sunshine\sunshine.exe" -Action Allow
+    ```
+  </Tab>
+  
+  <Tab title="Linux (UFW)">
+    ```bash
+    sudo ufw allow 47984:47990/tcp
+    sudo ufw allow 47998:48010/udp
+    sudo ufw allow 48100:48110/udp
+    ```
+  </Tab>
+  
+  <Tab title="Linux (firewalld)">
+    ```bash
+    sudo firewall-cmd --permanent --add-port=47984-47990/tcp
+    sudo firewall-cmd --permanent --add-port=47998-48010/udp
+    sudo firewall-cmd --permanent --add-port=48100-48110/udp
+    sudo firewall-cmd --reload
+    ```
+  </Tab>
+</Tabs>
+
+## Router Port Forwarding
+
+For internet streaming without UPnP, manually forward these ports in your router:
+
+1. Log into your router's admin interface
+2. Find the Port Forwarding section
+3. Forward these ranges to your host PC's local IP:
+   - TCP: 47984-47990
+   - UDP: 47998-48010  
+   - UDP: 48100-48110
+
+<Tip>
+Assign a static IP or DHCP reservation to your host PC to prevent port forwarding from breaking.
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Cannot connect from LAN">
+    - Check firewall allows Sunshine ports
+    - Verify `origin_web_ui_allowed` is not set to `pc`
+    - Ensure client and host are on same network
+    - Try disabling encryption temporarily: `lan_encryption_mode = 0`
+  </Accordion>
+  
+  <Accordion title="Cannot connect from internet">
+    - Enable UPnP: `upnp = enabled`
+    - OR manually forward ports in router
+    - Check external IP is correct: `external_ip`
+    - Verify ISP doesn't block ports
+    - Enable encryption: `wan_encryption_mode = 1` or `2`
+  </Accordion>
+  
+  <Accordion title="Connection drops frequently">
+    - Increase ping timeout: `ping_timeout = 15000`
+    - Check network stability
+    - Reduce bitrate in audio/video settings
+    - Enable FEC (forward error correction)
+  </Accordion>
+  
+  <Accordion title="Web UI not accessible">
+    - Check `origin_web_ui_allowed` setting
+    - Verify port 47990 (or base port + 1) is not blocked
+    - Try accessing via `https://localhost:47990`
+    - Check SSL certificate is valid
+  </Accordion>
+  
+  <Accordion title="UPnP not working">
+    - Verify router supports UPnP and it's enabled
+    - Check router logs for UPnP requests
+    - Manually forward ports as fallback
+    - Some ISPs block UPnP
+  </Accordion>
+</AccordionGroup>
+
+## Network Performance Tips
+
+<CardGroup cols={2}>
+  <Card title="Local Network" icon="house-signal">
+    - Use wired Ethernet for best performance
+    - Disable encryption for lower latency
+    - Use 5GHz WiFi if wireless is required
+    - Ensure router supports QoS
+  </Card>
+  
+  <Card title="Internet Streaming" icon="globe">
+    - Enable UPnP for easier setup
+    - Use encryption to protect data
+    - Reduce bitrate for slower connections
+    - Consider VPN as alternative to port forwarding
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Applications" icon="window" href="/configuration/apps">
+    Configure games and apps to stream
+  </Card>
+  <Card title="Audio/Video Settings" icon="video" href="/configuration/audio-video">
+    Optimize streaming quality
+  </Card>
+</CardGroup>

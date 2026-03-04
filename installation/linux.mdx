@@ -1,0 +1,303 @@
+---
+title: Linux Installation
+description: Install Sunshine on Linux using AppImage, Flatpak, or distribution packages
+---
+
+Sunshine supports multiple installation methods on Linux. Choose the method that best fits your distribution and requirements.
+
+## CUDA Compatibility
+
+CUDA is used for NVFBC capture on NVIDIA GPUs.
+
+<Note>
+See [CUDA GPUS](https://developer.nvidia.com/cuda-gpus) to cross-reference Compute Capability to your GPU. The table below applies to packages provided by LizardByte. If you use an official LizardByte package, then you do not need to install CUDA separately.
+</Note>
+
+| Package | CUDA Version | Min Driver | Compute Capabilities |
+|---------|--------------|------------|----------------------|
+| sunshine.AppImage | 12.9.1 | 575.57.08 | 50, 52, 60, 61, 62, 70, 72, 75, 80, 86, 87, 89, 90, 100, 101, 103, 120, 121 |
+| sunshine-ubuntu-22.04-{arch}.deb | 12.9.1 | 575.57.08 | 50, 52, 60, 61, 62, 70, 72, 75, 80, 86, 87, 89, 90, 100, 101, 103, 120, 121 |
+| sunshine-ubuntu-24.04-{arch}.deb | 12.9.1 | 575.57.08 | 50, 52, 60, 61, 62, 70, 72, 75, 80, 86, 87, 89, 90, 100, 101, 103, 120, 121 |
+| sunshine-debian-trixie-{arch}.deb | 12.9.1 | 575.57.08 | 50, 52, 60, 61, 62, 70, 72, 75, 80, 86, 87, 89, 90, 100, 101, 103, 120, 121 |
+| sunshine_{arch}.flatpak | 12.9.1 | 575.57.08 | 50, 52, 60, 61, 62, 70, 72, 75, 80, 86, 87, 89, 90, 100, 101, 103, 120, 121 |
+| sunshine.pkg.tar.zst | 12.9.1 | 575.57.08 | 50, 52, 60, 61, 62, 70, 72, 75, 80, 86, 87, 89, 90, 100, 101, 103, 120, 121 |
+| Sunshine (copr - Fedora) | 12.9.1 | 575.57.08 | 50, 52, 60, 61, 62, 70, 72, 75, 80, 86, 87, 89, 90, 100, 101, 103, 120, 121 |
+| Sunshine (copr - OpenSUSE) | 12.9.1 | 575.57.08 | 50, 52, 60, 61, 62, 70, 72, 75, 80, 86, 87, 89, 90, 100, 101, 103, 120, 121 |
+
+## Installation Methods
+
+<Tabs>
+  <Tab title="Debian/Ubuntu">
+    ### Install
+
+    Download `sunshine-{distro}-{distro-version}-{arch}.deb` and install:
+
+    ```bash
+    sudo dpkg -i ./sunshine-{distro}-{distro-version}-{arch}.deb
+    ```
+
+    <Note>
+    The `{distro-version}` is the version of the distro we built the package on. The `{arch}` is the architecture of your operating system.
+    </Note>
+
+    <Tip>
+    You can double-click the deb file to see details about the package and begin installation.
+    </Tip>
+
+    ### Uninstall
+
+    ```bash
+    sudo apt remove sunshine
+    ```
+  </Tab>
+
+  <Tab title="Arch Linux">
+    ### Install Prebuilt Packages
+
+    <Warning>
+    Use AUR packages at your own risk.
+    </Warning>
+
+    Follow the instructions at LizardByte's [pacman-repo](https://github.com/LizardByte/pacman-repo) to add the repository. Then run:
+
+    ```bash
+    pacman -S sunshine
+    ```
+
+    ### Install PKGBUILD Archive
+
+    <Steps>
+      <Step title="Download and extract">
+        ```bash
+        wget https://github.com/LizardByte/Sunshine/releases/latest/download/sunshine.pkg.tar.gz
+        tar -xvf sunshine.pkg.tar.gz
+        cd sunshine
+        ```
+      </Step>
+
+      <Step title="Install optional dependencies">
+        ```bash
+        # Nvidia GPU encoding support
+        pacman -S cuda
+
+        # AMD GPU encoding support
+        pacman -S libva-mesa-driver
+        ```
+      </Step>
+
+      <Step title="Build and install">
+        ```bash
+        makepkg -si
+        ```
+      </Step>
+    </Steps>
+
+    ### Uninstall
+
+    ```bash
+    pacman -R sunshine
+    ```
+  </Tab>
+
+  <Tab title="Fedora/OpenSUSE">
+    <Tip>
+    The package name is case-sensitive.
+    </Tip>
+
+    ### Install from GitHub Releases
+
+    Download `Sunshine-{version}.{distro+version}.{arch}.rpm` and install:
+
+    ```bash
+    sudo dnf install ./Sunshine-{version}.{distro}.{arch}.rpm
+    ```
+
+    <Note>
+    The `{distro+version}` is the distro and distro version of the distro we built the package on. The `{arch}` is the architecture of your operating system.
+    </Note>
+
+    <Tip>
+    You can double-click the rpm file to see details about the package and begin installation.
+    </Tip>
+
+    ### Install from Copr
+
+    <Warning>
+    Stable builds are only available if the Sunshine release was made after the Fedora version release. Because of this, it is often recommended to use the beta copr; however, you do not need to regularly update. This could lead to annoyances in rare cases where there may be a breaking change.
+    </Warning>
+
+    <Steps>
+      <Step title="Enable copr repository">
+        For stable releases:
+        ```bash
+        sudo dnf copr enable lizardbyte/stable
+        ```
+
+        For beta releases:
+        ```bash
+        sudo dnf copr enable lizardbyte/beta
+        ```
+      </Step>
+
+      <Step title="Install the package">
+        ```bash
+        sudo dnf install Sunshine
+        ```
+      </Step>
+    </Steps>
+
+    ### Uninstall
+
+    ```bash
+    sudo dnf remove Sunshine
+    ```
+  </Tab>
+
+  <Tab title="AppImage">
+    <Warning>
+    Use distro-specific packages instead of the AppImage if they are available. AppImage does not support KMS capture.
+    </Warning>
+
+    <Note>
+    The AppImage is built on Ubuntu 22.04, which requires `glibc 2.35` or newer and `libstdc++ 3.4.11` or newer.
+    </Note>
+
+    ### Install
+
+    <Steps>
+      <Step title="Download AppImage">
+        ```bash
+        cd ~
+        wget https://github.com/LizardByte/Sunshine/releases/latest/download/sunshine.AppImage
+        ```
+      </Step>
+
+      <Step title="Install Sunshine">
+        ```bash
+        ./sunshine.AppImage --install
+        ```
+      </Step>
+    </Steps>
+
+    ### Run
+
+    ```bash
+    ./sunshine.AppImage --install && ./sunshine.AppImage
+    ```
+
+    ### Uninstall
+
+    ```bash
+    ./sunshine.AppImage --remove
+    ```
+  </Tab>
+
+  <Tab title="Flatpak">
+    <Warning>
+    Use distro-specific packages instead of the Flatpak if they are available. Flatpak does not support KMS capture.
+    </Warning>
+
+    This package requires that you have [Flatpak](https://flatpak.org/setup) installed.
+
+    ### Install from Flathub
+
+    <CodeGroup>
+      ```bash System level
+      flatpak install --system flathub dev.lizardbyte.app.Sunshine
+      ```
+
+      ```bash User level
+      flatpak install --user flathub dev.lizardbyte.app.Sunshine
+      ```
+    </CodeGroup>
+
+    ### Install from Local File
+
+    <Note>
+    Replace `{arch}` with your system architecture.
+    </Note>
+
+    <CodeGroup>
+      ```bash System level
+      flatpak install --system ./sunshine_{arch}.flatpak
+      ```
+
+      ```bash User level
+      flatpak install --user ./sunshine_{arch}.flatpak
+      ```
+    </CodeGroup>
+
+    ### Additional Installation (Required)
+
+    ```bash
+    flatpak run --command=additional-install.sh dev.lizardbyte.app.Sunshine
+    ```
+
+    ### Run
+
+    Run with NVFBC capture (X11 Only) or XDG Portal (Wayland Only):
+
+    ```bash
+    flatpak run dev.lizardbyte.app.Sunshine
+    ```
+
+    ### Uninstall
+
+    ```bash
+    flatpak run --command=remove-additional-install.sh dev.lizardbyte.app.Sunshine
+    flatpak uninstall --delete-data dev.lizardbyte.app.Sunshine
+    ```
+  </Tab>
+
+  <Tab title="Homebrew">
+    <Warning>
+    The Homebrew package is experimental on Linux.
+    </Warning>
+
+    This package requires that you have [Homebrew](https://docs.brew.sh/Installation) installed.
+
+    ### Install
+
+    ```bash
+    brew update
+    brew upgrade
+    brew tap LizardByte/homebrew
+    brew install sunshine
+    ```
+
+    ### Uninstall
+
+    ```bash
+    brew uninstall sunshine
+    ```
+
+    <Tip>
+    For beta you can replace `sunshine` with `sunshine-beta` in the above commands.
+    </Tip>
+  </Tab>
+</Tabs>
+
+## Post-Installation Setup
+
+### Services
+
+<Note>
+Two service unit files are available. Pick "sunshine" for unprivileged XDG Portal or X11 capture, otherwise pick "sunshine-kms" for privileged KMS capture.
+</Note>
+
+**Start once:**
+
+```bash
+systemctl --user start sunshine
+```
+
+**Start on boot (unprivileged; swap logic for KMS):**
+
+```bash
+systemctl --user --now disable sunshine-kms
+systemctl --user --now enable sunshine
+```
+
+### Input Devices
+
+If inputs (mouse, keyboard, gamepads) aren't working after connecting, add the user running sunshine to the `input` group.

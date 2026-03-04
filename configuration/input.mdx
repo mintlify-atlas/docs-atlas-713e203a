@@ -1,0 +1,316 @@
+---
+title: Input Configuration
+description: Configure gamepad emulation, keyboard, and mouse input settings
+---
+
+Input configuration controls how Sunshine handles controller, keyboard, and mouse input from Moonlight clients.
+
+## Controller Settings
+
+<ParamField path="controller" type="boolean" default="enabled">
+  Whether to allow controller input from the client.
+
+  ```bash
+  controller = enabled
+  ```
+</ParamField>
+
+<ParamField path="gamepad" type="string" default="auto">
+  The type of gamepad to emulate on the host.
+
+  **Options:**
+  - `auto` - Automatically select based on client capabilities
+  - `x360` - Xbox 360 controller (Windows only)
+  - `xone` - Xbox One controller (FreeBSD/Linux only)
+  - `ds4` - DualShock 4 controller / PS4 (Windows only)
+  - `ds5` - DualSense controller / PS5 (FreeBSD/Linux only)
+  - `switch` - Switch Pro controller (FreeBSD/Linux only)
+
+  ```bash
+  gamepad = auto
+  ```
+</ParamField>
+
+## Auto Gamepad Selection
+
+<ParamField path="motion_as_ds4" type="boolean" default="enabled">
+  If client reports motion sensor support, emulate as DS4 controller.
+
+  <Note>Only applies when gamepad is set to `auto`</Note>
+
+  ```bash
+  motion_as_ds4 = enabled
+  ```
+</ParamField>
+
+<ParamField path="touchpad_as_ds4" type="boolean" default="enabled">
+  If client reports touchpad support, emulate as DS4 controller.
+
+  <Note>Only applies when gamepad is set to `auto`</Note>
+
+  ```bash
+  touchpad_as_ds4 = enabled
+  ```
+</ParamField>
+
+## DualShock 4 Settings
+
+<ParamField path="ds4_back_as_touchpad_click" type="boolean" default="enabled">
+  Allow Select/Back button to trigger DS4 touchpad click. Useful for clients emulating touchpad clicks on XInput devices.
+
+  <Note>Only applies when gamepad is manually set to `ds4`</Note>
+
+  ```bash
+  ds4_back_as_touchpad_click = enabled
+  ```
+</ParamField>
+
+## DualSense Settings
+
+<ParamField path="ds5_inputtino_randomize_mac" type="boolean" default="enabled">
+  Randomize the MAC address for virtual PS5 controllers.
+
+  <Note>Linux only, applies to PS5-style controllers</Note>
+
+  ```bash
+  ds5_inputtino_randomize_mac = enabled
+  ```
+</ParamField>
+
+## Controller Button Mapping
+
+<ParamField path="back_button_timeout" type="number" default="-1">
+  Milliseconds to hold Back/Select button to emulate Home/Guide button press.
+
+  <Tip>Set to -1 to disable Home/Guide emulation</Tip>
+
+  ```bash
+  back_button_timeout = 2000
+  ```
+</ParamField>
+
+## Keyboard Settings
+
+<ParamField path="keyboard" type="boolean" default="enabled">
+  Whether to allow keyboard input from the client.
+
+  ```bash
+  keyboard = enabled
+  ```
+</ParamField>
+
+<ParamField path="key_repeat_delay" type="number" default="500">
+  Initial delay in milliseconds before repeating keys.
+
+  ```bash
+  key_repeat_delay = 500
+  ```
+</ParamField>
+
+<ParamField path="key_repeat_frequency" type="number" default="24.9">
+  How often keys repeat per second (supports decimals).
+
+  ```bash
+  key_repeat_frequency = 24.9
+  ```
+</ParamField>
+
+<ParamField path="always_send_scancodes" type="boolean" default="enabled">
+  Send scancodes for better game compatibility.
+
+  <Note>Windows only</Note>
+
+  **Enable if:** Keyboard input doesn't work in certain applications
+  
+  **Disable if:** Keys generate wrong input (non-US keyboard layouts)
+
+  ```bash
+  always_send_scancodes = enabled
+  ```
+</ParamField>
+
+<ParamField path="key_rightalt_to_key_win" type="boolean" default="disabled">
+  Remap Right Alt key to Windows key. Useful when Moonlight cannot send the Windows key directly.
+
+  ```bash
+  key_rightalt_to_key_win = enabled
+  ```
+</ParamField>
+
+## Key Bindings
+
+<ParamField path="keybindings" type="array" default="[0x10, 0xA0, 0x11, 0xA2, 0x12, 0xA4]">
+  Map virtual key codes for special key handling. Useful on Wayland where the Win key cannot be captured.
+
+  <Note>Not available in Web UI - must be configured in config file</Note>
+
+  Array must have an even number of elements (pairs of source and target key codes).
+
+  See [Virtual Key Codes](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes) for reference.
+
+  ```bash
+  keybindings = [
+    0x10, 0xA0,  # Left Shift
+    0x11, 0xA2,  # Left Control  
+    0x12, 0xA4,  # Left Alt
+    0x4A, 0x4B   # J -> K
+  ]
+  ```
+</ParamField>
+
+## Mouse Settings
+
+<ParamField path="mouse" type="boolean" default="enabled">
+  Whether to allow mouse input from the client.
+
+  ```bash
+  mouse = enabled
+  ```
+</ParamField>
+
+<ParamField path="high_resolution_scrolling" type="boolean" default="enabled">
+  Pass through high resolution scroll events from Moonlight.
+
+  Disable for older applications that scroll too fast with high resolution events.
+
+  ```bash
+  high_resolution_scrolling = enabled
+  ```
+</ParamField>
+
+<ParamField path="native_pen_touch" type="boolean" default="enabled">
+  Pass through native pen/touch events from Moonlight.
+
+  Disable for older applications without native pen/touch support.
+
+  ```bash
+  native_pen_touch = enabled
+  ```
+</ParamField>
+
+## Example Configuration
+
+### Auto Controller Selection
+
+```bash
+# Controller
+controller = enabled
+gamepad = auto
+motion_as_ds4 = enabled
+touchpad_as_ds4 = enabled
+
+# Keyboard
+keyboard = enabled
+key_repeat_delay = 500
+key_repeat_frequency = 24.9
+
+# Mouse
+mouse = enabled
+high_resolution_scrolling = enabled
+native_pen_touch = enabled
+```
+
+### Fixed Xbox 360 Controller (Windows)
+
+```bash
+# Force Xbox 360 emulation
+controller = enabled
+gamepad = x360
+
+# Keyboard and mouse
+keyboard = enabled
+mouse = enabled
+always_send_scancodes = enabled
+```
+
+### DualShock 4 with Motion (Windows)
+
+```bash
+# Force DS4 emulation
+controller = enabled
+gamepad = ds4
+ds4_back_as_touchpad_click = enabled
+back_button_timeout = 2000
+
+# Enable all input types
+keyboard = enabled
+mouse = enabled
+high_resolution_scrolling = enabled
+native_pen_touch = enabled
+```
+
+### DualSense Controller (Linux)
+
+```bash
+# Force DS5 emulation
+controller = enabled
+gamepad = ds5
+ds5_inputtino_randomize_mac = enabled
+
+# Input settings
+keyboard = enabled
+mouse = enabled
+```
+
+## Platform-Specific Notes
+
+<Tabs>
+  <Tab title="Windows">
+    - Xbox 360 (x360) and DualShock 4 (ds4) emulation available
+    - `always_send_scancodes` improves game compatibility
+    - Use `key_rightalt_to_key_win` if Windows key doesn't work
+  </Tab>
+  
+  <Tab title="Linux">
+    - Xbox One (xone), DualSense (ds5), and Switch Pro available
+    - Consider `gamepad = auto` for best client compatibility
+    - Use keybindings to work around Wayland Win key capture limitations
+  </Tab>
+  
+  <Tab title="FreeBSD">
+    - Same gamepad options as Linux
+    - Xbox One, DualSense, and Switch Pro controllers supported
+  </Tab>
+  
+  <Tab title="macOS">
+    - Limited gamepad emulation options
+    - All input types supported
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Controller not detected in games">
+    - Try setting `gamepad` to a specific controller type instead of `auto`
+    - For Windows games, try `x360` (most compatible)
+    - Check if the game supports the emulated controller type
+  </Accordion>
+  
+  <Accordion title="Wrong keyboard keys on client">
+    - Disable `always_send_scancodes` if using non-US keyboard layout
+    - Check client keyboard layout matches host
+  </Accordion>
+  
+  <Accordion title="Windows key doesn't work">
+    - Enable `key_rightalt_to_key_win` to use Right Alt as Windows key
+    - On Wayland, configure `keybindings` to map Win key
+  </Accordion>
+  
+  <Accordion title="Touchpad/motion doesn't work">
+    - Ensure client reports touchpad/motion support
+    - Set `gamepad = ds4` (Windows) or `gamepad = ds5` (Linux)
+    - Verify `touchpad_as_ds4` and `motion_as_ds4` are enabled
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Network Settings" icon="network-wired" href="/configuration/network">
+    Configure ports and network access
+  </Card>
+  <Card title="Applications" icon="window" href="/configuration/apps">
+    Add games and applications to stream
+  </Card>
+</CardGroup>

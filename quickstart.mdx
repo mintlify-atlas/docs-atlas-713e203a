@@ -1,80 +1,328 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Get up and running with Sunshine in minutes. Learn how to install, configure, pair with Moonlight, and start your first stream.
 ---
 
-## Get started in three steps
+This guide will walk you through getting Sunshine up and running quickly. By the end, you'll be streaming from your host computer to a Moonlight client.
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
+Before you begin, ensure you have:
+- Completed the [installation](/installation) for your platform
+- A device with a Moonlight client installed ([download Moonlight](https://moonlight-stream.org/))
+- Both host and client on the same network (for initial setup)
+
+## Initial Setup
+
+<Steps>
+  <Step title="Platform-Specific Setup">
+    Some platforms require additional configuration after installation.
+
+    <Tabs>
+      <Tab title="Linux">
+        **Configure Services**
+
+        Choose between unprivileged (XDG Portal/X11) or privileged (KMS) capture:
+
+        **Start once**:
+        ```bash
+        systemctl --user start sunshine
+        ```
+
+        **Enable on boot** (unprivileged):
+        ```bash
+        systemctl --user --now disable sunshine-kms
+        systemctl --user --now enable sunshine
+        ```
+
+        **Enable on boot** (KMS - privileged):
+        ```bash
+        systemctl --user --now disable sunshine
+        systemctl --user --now enable sunshine-kms
+        ```
+
+        <Note>
+        Two service unit files are available: `sunshine` for unprivileged XDG Portal or X11 capture, and `sunshine-kms` for privileged KMS capture.
+        </Note>
+
+        **Virtual Input Devices**
+
+        If inputs aren't working, add your user to the `input` group:
+        ```bash
+        sudo usermod -a -G input $USER
+        ```
+        
+        Log out and log back in for changes to take effect.
+      </Tab>
+
+      <Tab title="Windows">
+        **Install ViGEmBus for Virtual Gamepads**
+
+        Virtual gamepads require ViGEmBus. You can install it from the Sunshine web UI:
+
+        1. Open the web UI at [https://localhost:47990](https://localhost:47990)
+        2. Navigate to the "Troubleshooting" tab
+        3. Click the ViGEmBus installation button
+        4. Restart your computer after installation
+
+        <Warning>
+        You must run Sunshine as a service or administrator to install ViGEmBus from the web UI.
+        </Warning>
+      </Tab>
+
+      <Tab title="macOS">
+        **Grant Permissions**
+
+        The first time you start Sunshine, macOS will prompt you to grant access to:
+        - Screen recording
+        - Microphone access
+
+        Grant these permissions in System Preferences > Security & Privacy.
+
+        <Info>
+        Sunshine can only access microphones on macOS. To stream system audio, use [Soundflower](https://github.com/mattingalls/Soundflower) or [BlackHole](https://github.com/ExistentialAudio/BlackHole).
+        </Info>
+
+        <Warning>
+        Gamepads are not currently supported on macOS. Command keys are not forwarded by Moonlight - Right Option key is mapped to CMD key.
+        </Warning>
+      </Tab>
+
+      <Tab title="FreeBSD">
+        **Configure Virtual Input Devices**
+
+        Add your user to the `input` group to use virtual input devices:
+
+        ```bash
+        pw groupmod input -m $USER
+        ```
+
+        Log out and log back in for changes to take effect.
+
+        <Note>
+        The installation process creates the `input` group and configures permissions for `/dev/uinput`.
+        </Note>
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Start Sunshine">
+    If Sunshine is not running as a service, start it manually:
+
+    ```bash
+    sunshine
+    ```
+
+    <Info>
+    A service is a process that runs in the background. When installed from the Windows installer or using systemd on Linux, Sunshine runs as a service automatically.
+    </Info>
+
+    **Optional**: Specify a custom config file location:
+    ```bash
+    sunshine /path/to/sunshine.conf
+    ```
+
+    **SSH on Linux (X11)**:
+    ```bash
+    ssh user@host 'export DISPLAY=:0; sunshine'
+    ```
+  </Step>
+
+  <Step title="Access the Web UI">
+    Open your web browser and navigate to:
+
+    ```
+    https://localhost:47990
+    ```
+
+    Replace `localhost` with your server's IP address if accessing from another device.
+
+    <Warning>
+    Your browser will warn about an "insecure website" due to the self-signed SSL certificate. This is normal - proceed past the warning.
+    </Warning>
+
+    On first access, you'll be prompted to create:
+    - A username
+    - A password
+
+    <Tip>
+    Save these credentials securely - you'll need them to access the web UI in the future.
+    </Tip>
+  </Step>
+
+  <Step title="Configure Sunshine">
+    Configure Sunshine through the web UI:
+
+    **Set Your Theme**
+    
+    Choose your preferred theme from the dropdown menu in the navbar.
+
+    **Add Applications**
+
+    Navigate to the "Applications" tab and add games or applications you want to stream:
+
+    1. Click "Add New"
+    2. Enter the application name (e.g., "Steam", "Desktop")
+    3. Set the command to launch the application
+    4. Configure the working directory if needed
+    5. Optionally add an image (e.g., `steam.png`, `desktop.png`)
+    6. Save the application
+
+    <Note>
+    The "Desktop" app works differently - it has no commands and simply starts a stream of your desktop. If you removed it, create a new application named "Desktop" with "desktop.png" as the image.
+    </Note>
+
+    **Adjust Settings**
+
+    Explore the "Configuration" tab to:
+    - Set video encoding preferences
+    - Configure audio settings
+    - Adjust network settings
+    - Enable HDR if supported
+
+    Use the search bar to quickly find specific settings.
+
+    <Tip>
+    Most default settings work well for typical setups. Only adjust if you encounter issues or have specific requirements.
+    </Tip>
+  </Step>
+
+  <Step title="Pair Moonlight Client">
+    On your client device running Moonlight:
+
+    1. **Add PC Manually** (if not auto-discovered)
+       - Click the "+" or "Add PC" button
+       - Enter your host computer's IP address
+
+    2. **Initiate Pairing**
+       - Moonlight will display a 4-digit PIN code
+
+    3. **Enter PIN in Sunshine**
+       - In the Sunshine web UI, navigate to the "PIN" tab in the navbar
+       - Enter the 4-digit PIN shown in Moonlight
+       - Provide a name for the client device
+       - Press Enter or click Submit
+
+    <Info>
+    You should see a success message in the web UI. The client is now authorized to connect.
+    </Info>
+  </Step>
+
+  <Step title="Start Streaming">
+    In your Moonlight client:
+
+    1. Select your paired host computer
+    2. Choose an application from the list (e.g., "Desktop" or a game)
+    3. Click to start streaming
+
+    The stream should start within a few seconds!
+
+    <Tip>
+    Start with the "Desktop" app to test basic functionality before streaming games.
+    </Tip>
+  </Step>
+</Steps>
+
+## Keyboard Shortcuts
+
+While streaming, these shortcuts are available (all start with `Ctrl+Alt+Shift`):
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Alt+Shift+N` | Hide/Unhide cursor (useful for Remote Desktop Mode) |
+| `Ctrl+Alt+Shift+F1` to `F12` | Switch to different monitor |
+
+## Troubleshooting
+
+If you encounter issues:
+
+### Check Logs
+
+1. Navigate to the "Troubleshooting" tab in the web UI
+2. Review warning and error messages
+3. Click on individual messages for detailed information
+
+### Common Issues
 
 <AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+  <Accordion title="Inputs (mouse, keyboard, gamepad) not working">
+    **Linux/FreeBSD**: Add your user to the `input` group:
+    ```bash
+    # Linux
+    sudo usermod -a -G input $USER
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
+    # FreeBSD
+    pw groupmod input -m $USER
+    ```
+    
+    Log out and log back in.
   </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
+
+  <Accordion title="Virtual gamepads not working (Windows)">
+    Install ViGEmBus from the Troubleshooting tab in the web UI, then restart your computer.
+  </Accordion>
+
+  <Accordion title="Stream immediately fails when starting an application">
+    The application may be starting as a detached process. Try:
+    - Use "detached" mode in the application configuration
+    - For Steam, this is expected behavior when launched directly
+    - Check if the application command is correct
+  </Accordion>
+
+  <Accordion title="Can't connect from Moonlight">
+    Verify:
+    - Sunshine is running
+    - Host and client are on the same network
+    - Firewall allows connections on ports 47984-47990 (TCP) and 47998-48000 (UDP)
+    - Try adding the PC manually by IP address in Moonlight
+  </Accordion>
+
+  <Accordion title="Poor stream quality or high latency">
+    Try:
+    - Use a wired connection instead of WiFi
+    - Lower the resolution or bitrate in Moonlight settings
+    - Enable hardware encoding in Sunshine configuration
+    - Close bandwidth-intensive applications
   </Accordion>
 </AccordionGroup>
 
-### Step 2: Deploy your changes
+### Get Help
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+For additional support:
+- Check the [documentation](https://docs.lizardbyte.dev/projects/sunshine/)
+- Review [video tutorials](https://www.youtube.com/playlist?list=PLMYr5_xSeuXAbhxYHz86hA1eCDugoxXY0)
+- Visit the [LizardByte support channels](https://docs.lizardbyte.dev/latest/about/support.html)
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Advanced Topics
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+Once you have basic streaming working, explore these advanced features:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="HDR Streaming" icon="sun-bright">
+    Learn how to configure HDR streaming for supported platforms (Windows officially, Linux experimentally).
+  </Card>
+  
+  <Card title="Application Configuration" icon="gears">
+    Advanced application setup including environment variables, prep/post commands, and working directories.
+  </Card>
+  
+  <Card title="Network Configuration" icon="network-wired">
+    Configure port forwarding, UPnP, and remote access for streaming over the internet.
+  </Card>
+  
+  <Card title="Performance Tuning" icon="gauge-high">
+    Optimize encoding settings, capture methods, and system configuration for best performance.
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+## Next Steps
+
+Now that you're up and running, explore the rest of the documentation to learn more about:
+- Detailed configuration options
+- Platform-specific optimizations
+- Advanced networking and remote access
+- Command-line arguments and scripting
+
+<Tip>
+Experiment with different settings to find what works best for your specific hardware and network setup.
+</Tip>

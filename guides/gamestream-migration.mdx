@@ -1,0 +1,166 @@
+---
+title: Migrating from NVIDIA GameStream
+description: Complete guide to migrating from GeForce Experience GameStream to Sunshine
+---
+
+NVIDIA discontinued their GameStream service for GeForce Experience in February 2023. Sunshine offers equal or better performance and is a complete open-source replacement that works with any GPU.
+
+## Why Migrate to Sunshine?
+
+Sunshine provides several advantages over the discontinued GameStream:
+
+- **Cross-platform support**: Works on Windows, Linux, and macOS
+- **Hardware agnostic**: Compatible with NVIDIA, AMD, and Intel GPUs
+- **Active development**: Regular updates and improvements
+- **Open source**: Community-driven with full transparency
+- **Performance**: Equal or better streaming quality than GameStream
+- **Flexibility**: More configuration options and customization
+
+## Automated Migration Tool
+
+The easiest way to migrate is using the [GameStream Migration Script (GSMS)](https://github.com/LizardByte/GSMS) project.
+
+### What GSMS Migrates
+
+<CardGroup cols={2}>
+  <Card title="Custom Games" icon="gamepad">
+    All manually added games and applications
+  </Card>
+  <Card title="Auto-detected Games" icon="magnifying-glass">
+    Games automatically detected by GeForce Experience
+  </Card>
+  <Card title="Game Settings" icon="sliders">
+    Working directory, command, and launch parameters
+  </Card>
+  <Card title="Box Art" icon="image">
+    Game images copied to your specified directory
+  </Card>
+</CardGroup>
+
+### Using GSMS
+
+<Steps>
+  <Step title="Install Sunshine">
+    Install Sunshine on your system before running GSMS. Follow the [installation guide](/getting-started/installation) for your platform.
+  </Step>
+  
+  <Step title="Download GSMS">
+    Download the latest release from the [GSMS GitHub repository](https://github.com/LizardByte/GSMS/releases)
+  </Step>
+  
+  <Step title="Run the Migration">
+    Execute GSMS and follow the prompts to migrate your games
+  </Step>
+  
+  <Step title="Verify Migration">
+    Open the Sunshine Web UI and verify your games appear in the applications list
+  </Step>
+</Steps>
+
+## Internet Streaming Setup
+
+If you previously used the **Moonlight Internet Hosting Tool** for streaming over the internet, you can remove it after migrating to Sunshine.
+
+### Enabling Internet Streaming
+
+<Steps>
+  <Step title="Open Sunshine Web UI">
+    Navigate to `https://localhost:47990` in your web browser
+  </Step>
+  
+  <Step title="Enable UPnP">
+    Go to **Configuration** and enable the **UPnP** option
+  </Step>
+  
+  <Step title="Save Changes">
+    Apply the configuration and restart Sunshine if prompted
+  </Step>
+</Steps>
+
+<Note>
+Your router must support UPnP for automatic port forwarding. If UPnP is not available, you'll need to manually forward ports 47984-47990 (TCP and UDP) to your Sunshine host.
+</Note>
+
+<Warning>
+Running Sunshine together with Moonlight Internet Hosting Tool versions prior to v5.6 will cause UPnP port forwarding to become unreliable. Either uninstall the tool entirely or update it to v5.6 or later.
+</Warning>
+
+## Key Differences from GameStream
+
+While Sunshine provides a superior streaming experience, there are some differences to be aware of:
+
+### What Sunshine Doesn't Include
+
+<Accordion title="Automatic Game Detection">
+  Unlike GeForce Experience, Sunshine does not automatically detect installed games. You'll need to manually add games through the Web UI or migrate them using GSMS.
+  
+  However, you can configure Sunshine to launch game launchers (Steam, Epic Games, etc.) which provide their own game libraries.
+</Accordion>
+
+<Accordion title="Automatic Game Optimization">
+  GameStream could automatically adjust game settings for optimal streaming. Sunshine does not modify game settings.
+  
+  Instead, you have full control over your game settings and can configure prep commands to adjust resolution, refresh rate, and other display settings dynamically.
+</Accordion>
+
+### What You Gain with Sunshine
+
+<CardGroup cols={2}>
+  <Card title="Prep Commands" icon="terminal">
+    Execute commands before and after streaming sessions (resolution changes, process management, etc.)
+  </Card>
+  <Card title="Custom Detached Commands" icon="code">
+    Launch applications in specific ways for better compatibility
+  </Card>
+  <Card title="Platform Support" icon="desktop">
+    Stream from Linux and macOS systems, not just Windows
+  </Card>
+  <Card title="GPU Flexibility" icon="microchip">
+    Use AMD or Intel hardware encoding alongside NVIDIA
+  </Card>
+</CardGroup>
+
+## Manual Migration Steps
+
+If you prefer to migrate manually or GSMS doesn't work for your setup:
+
+<Steps>
+  <Step title="Document Current Games">
+    Take screenshots or notes of your GameStream game library including custom launch parameters
+  </Step>
+  
+  <Step title="Install Sunshine">
+    Follow the [installation guide](/getting-started/installation) for your platform
+  </Step>
+  
+  <Step title="Add Games Individually">
+    Open the Sunshine Web UI at `https://localhost:47990` and add each game through the Applications section
+  </Step>
+  
+  <Step title="Copy Box Art">
+    Manually copy game images to Sunshine's cover art directory if desired
+  </Step>
+  
+  <Step title="Test Each Game">
+    Launch each game through Moonlight to ensure proper configuration
+  </Step>
+</Steps>
+
+## Post-Migration Checklist
+
+- [ ] Uninstall Moonlight Internet Hosting Tool (if using Sunshine's UPnP)
+- [ ] Test streaming on your local network
+- [ ] Test internet streaming (if applicable)
+- [ ] Configure firewall rules for Sunshine
+- [ ] Set up prep commands for resolution switching (optional)
+- [ ] Customize encoder settings for your GPU
+- [ ] Back up your Sunshine configuration
+
+## Getting Help
+
+If you encounter issues during migration:
+
+- Check the [Troubleshooting guide](/guides/troubleshooting)
+- Review [application examples](/guides/app-examples) for configuration help
+- Visit the [Sunshine Discord](https://discord.gg/sunshine) for community support
+- Report bugs on [GitHub](https://github.com/LizardByte/Sunshine/issues)

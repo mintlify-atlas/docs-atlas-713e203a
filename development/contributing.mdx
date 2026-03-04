@@ -1,0 +1,405 @@
+---
+title: Contributing Guidelines
+description: How to contribute code, documentation, and translations to Sunshine
+---
+
+Thank you for your interest in contributing to Sunshine! This guide will help you get started with contributing code, documentation, translations, and more.
+
+## How to Contribute
+
+There are many ways to contribute to Sunshine:
+
+- **Report bugs** - Help us identify and fix issues
+- **Suggest features** - Share ideas for improvements
+- **Write code** - Fix bugs or implement new features
+- **Write documentation** - Improve guides and API docs
+- **Translate** - Help localize Sunshine into other languages
+- **Review pull requests** - Provide feedback on proposed changes
+- **Help others** - Answer questions in discussions and Discord
+
+## Getting Started
+
+### Prerequisites
+
+1. **GitHub account** - Required for contributing
+2. **Git** - For version control
+3. **Development environment** - See [Building from Source](/development/building)
+4. **Familiarity with C++** - For code contributions
+
+### First Steps
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork** locally:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/Sunshine.git --recurse-submodules
+   cd Sunshine
+   ```
+3. **Create a branch** for your changes:
+   ```bash
+   git checkout -b feature/my-new-feature
+   ```
+4. **Make your changes** (see guidelines below)
+5. **Test your changes** thoroughly
+6. **Commit and push** your changes
+7. **Open a pull request** on GitHub
+
+## Code Style and Standards
+
+### C++ Code Style
+
+Sunshine uses `clang-format` for consistent code formatting. The configuration is in `.clang-format` at the repository root.
+
+**Before committing, format your code:**
+
+<CodeGroup>
+  ```bash Option 1: Manual
+  find ./ -iname *.cpp -o -iname *.h -iname *.m -iname *.mm | xargs clang-format -i
+  ```
+
+  ```bash Option 2: Python Script
+  python ./scripts/update_clang_format.py
+  ```
+</CodeGroup>
+
+<Note>
+  The CI workflow will automatically check code formatting. Pull requests with formatting issues will fail CI checks.
+</Note>
+
+### Coding Standards
+
+**General Guidelines:**
+- Use C++17 or later features where appropriate
+- Follow RAII principles for resource management
+- Prefer `std::unique_ptr` and `std::shared_ptr` over raw pointers
+- Use `const` wherever possible
+- Write self-documenting code with clear variable names
+- Add comments for complex logic
+
+**Platform-Specific Code:**
+- Place platform-specific code in `src/platform/<platform>/`
+- Use platform abstraction interfaces in `src/platform/common.h`
+- Avoid `#ifdef` blocks in core code when possible
+
+**Error Handling:**
+- Check return values and handle errors gracefully
+- Use exceptions for exceptional conditions
+- Log errors with appropriate severity levels
+
+## Recommended Development Tools
+
+Sunshine development is best done with an IDE that supports C++ and CMake:
+
+| Tool | Description |
+|:-----|:------------|
+| [CLion](https://www.jetbrains.com/clion/) | Recommended IDE for C and C++ development. Free for non-commercial use. |
+| [Visual Studio Code](https://code.visualstudio.com/) | Free, with C++ and CMake extensions |
+| [Visual Studio](https://visualstudio.microsoft.com/) | On Windows, with CMake support |
+
+## Web UI Development
+
+The Web UI uses **Vue.js 3** with **Vite** as the build system.
+
+### Web UI Structure
+
+- **Location**: `./src_assets/common/assets/web`
+- **Templating**: EJS (see `template_header.html` and `template_header_main.html`)
+- **Styling**: Bootstrap 5
+- **Icons**: Lucide and Simple Icons
+
+### Building the Web UI
+
+<Tabs>
+  <Tab title="CMake">
+    ```bash
+    cmake -B build -G Ninja -S . --target web-ui
+    ninja -C build web-ui
+    ```
+  </Tab>
+  <Tab title="Manual (npm)">
+    ```bash
+    cd src_assets/common/assets/web
+    npm install
+    npm run dev
+    ```
+  </Tab>
+</Tabs>
+
+### Web UI Guidelines
+
+- Follow Vue.js best practices
+- Use existing Bootstrap components when possible
+- Ensure responsive design (mobile, tablet, desktop)
+- Test on multiple browsers
+- Keep dependencies up to date
+
+## Localization and Translation
+
+Sunshine supports multiple languages through [CrowdIn](https://translate.lizardbyte.dev).
+
+### Translation Basics
+
+<Warning>
+  - **NEVER** translate brand names: *LizardByte*, *Sunshine*, *AMD*, *Intel*, *NVIDIA*
+  - Only add strings to `en.json` - translations happen on CrowdIn
+  - Do not manually edit other language files
+</Warning>
+
+### Adding Translatable Strings
+
+#### Web UI (Vue.js)
+
+Sunshine uses [Vue I18n](https://vue-i18n.intlify.dev) for the Web UI.
+
+**1. Add the string to the English locale file:**
+
+`src_assets/common/assets/web/public/assets/locale/en.json`:
+
+```json
+{
+  "index": {
+    "welcome": "Hello, Sunshine!"
+  }
+}
+```
+
+<Note>
+  JSON keys should be sorted alphabetically. Use [jsonabc](https://novicelab.org/jsonabc) to sort keys.
+</Note>
+
+**2. Use the string in your Vue component:**
+
+```html
+<template>
+  <div>
+    <p>{{ $t('index.welcome') }}</p>
+  </div>
+</template>
+```
+
+**More formatting examples:**
+- [Vue I18n Formatting Guide](https://kazupon.github.io/vue-i18n/guide/formatting.html)
+
+#### C++ Code
+
+For system tray or other native UI elements, use `boost::locale`:
+
+```cpp
+#include <boost/locale.hpp>
+#include <string>
+
+std::string msg = boost::locale::translate("Hello world!");
+```
+
+**More examples:**
+- [Boost.Locale Documentation](https://www.boost.org/doc/libs/1_70_0/libs/locale/doc/html/messages_formatting.html)
+
+<Warning>
+  Do not include manually updated template files (`.po`) or compiled language files (`.mo`) in pull requests. These are generated automatically by CI.
+</Warning>
+
+### Translation Workflow
+
+1. **Developer adds string** to `en.json` (Web UI) or C++ code
+2. **PR is merged** to master branch
+3. **CI workflow extracts strings** and pushes to CrowdIn
+4. **Translators translate** on CrowdIn
+5. **CrowdIn pushes translations** to `l10n_master` branch
+6. **PR is created** from `l10n_master` to `master`
+7. **PR is merged**, translations are now available
+
+## Testing
+
+### Unit Testing
+
+Sunshine uses [Google Test](https://github.com/google/googletest) for unit testing.
+
+**Location**: `./tests/`
+
+**Run tests:**
+```bash
+./build/tests/test_sunshine
+```
+
+**Run specific tests:**
+```bash
+./build/tests/test_sunshine --gtest_filter="TestSuiteName.TestName"
+```
+
+**Run with verbose output:**
+```bash
+./build/tests/test_sunshine --gtest_verbose
+```
+
+**Help:**
+```bash
+./build/tests/test_sunshine --help
+```
+
+### Code Coverage
+
+Sunshine uses [gcovr](https://www.gcovr.com) to generate code coverage reports.
+
+**Coverage is checked by [Codecov](https://about.codecov.io):**
+- PRs must maintain or improve total coverage
+- New code should have adequate test coverage
+
+**Excluding code from coverage:**
+
+If code cannot be tested in CI (e.g., requires GPU access), you can exclude it:
+
+```cpp
+// GCOV_EXCL_START
+void untestable_gpu_function() {
+    // This code won't be counted in coverage
+}
+// GCOV_EXCL_STOP
+```
+
+See [gcovr exclusion markers](https://gcovr.com/en/stable/guide/exclusion-markers.html) for more options.
+
+<Note>
+  Even if your code can't be tested in CI, we encourage you to write tests for it. This allows maintainers to run tests locally with proper hardware.
+</Note>
+
+### Clang Format Testing
+
+CI automatically checks code formatting. To test locally before pushing:
+
+```bash
+python ./scripts/update_clang_format.py
+```
+
+Then check for changes:
+```bash
+git diff
+```
+
+If there are changes, commit them before pushing.
+
+## Pull Request Process
+
+### Before Submitting
+
+- [ ] Code is formatted with `clang-format`
+- [ ] All tests pass locally
+- [ ] New features have tests
+- [ ] Documentation is updated (if applicable)
+- [ ] Commit messages are clear and descriptive
+- [ ] Branch is up to date with `master`
+
+### Pull Request Guidelines
+
+**Title:**
+- Use a clear, descriptive title
+- Start with a verb: "Add", "Fix", "Update", "Improve", "Remove"
+- Examples:
+  - "Add support for AV1 encoding"
+  - "Fix crash when disconnecting client"
+  - "Update documentation for KMS capture"
+
+**Description:**
+- Describe **what** changed and **why**
+- Reference related issues: "Fixes #123" or "Related to #456"
+- Include screenshots/videos for UI changes
+- List breaking changes (if any)
+- Explain how to test the changes
+
+**Example:**
+```markdown
+## Summary
+
+Adds support for AV1 encoding on Linux using VAAPI.
+
+## Changes
+
+- Added AV1 encoder initialization in `video.cpp`
+- Updated encoder selection logic
+- Added AV1 configuration options
+
+## Testing
+
+1. Build with `SUNSHINE_ENABLE_VAAPI=ON`
+2. Set encoder to "av1" in config
+3. Start streaming session
+4. Verify AV1 encoding in client logs
+
+Fixes #789
+```
+
+### Review Process
+
+1. **Automated checks** run (CI, formatting, tests)
+2. **Maintainers review** your code
+3. **Address feedback** if requested
+4. **Approval** from maintainer(s)
+5. **Merge** to master branch
+
+<Note>
+  Be patient - maintainers are volunteers. It may take a few days to review your PR.
+</Note>
+
+## Reporting Bugs
+
+When reporting bugs, please include:
+
+- **Sunshine version** (e.g., v0.20.0)
+- **Platform** (Linux, Windows, macOS, FreeBSD)
+- **OS version** (e.g., Ubuntu 22.04, Windows 11, macOS 14)
+- **GPU** (vendor and model)
+- **Steps to reproduce** (detailed and numbered)
+- **Expected behavior**
+- **Actual behavior**
+- **Logs** (see log locations in [Architecture](/development/architecture))
+- **Screenshots/videos** (if applicable)
+
+**Use the bug report template** when creating an issue on GitHub.
+
+## Feature Requests
+
+When requesting features:
+
+- **Check existing issues** - your feature may already be requested
+- **Describe the use case** - why is this feature needed?
+- **Provide examples** - how would it work?
+- **Consider alternatives** - are there other solutions?
+
+**Use the feature request template** when creating an issue on GitHub.
+
+## Community Guidelines
+
+### Code of Conduct
+
+Sunshine follows LizardByte's community guidelines:
+
+- **Be respectful** - treat everyone with kindness
+- **Be constructive** - provide helpful feedback
+- **Be patient** - remember maintainers are volunteers
+- **Be inclusive** - welcome all contributors
+
+### Communication Channels
+
+- **GitHub Issues**: Bug reports and feature requests
+- **GitHub Discussions**: General questions and discussions
+- **Discord**: Real-time chat and support
+- **Documentation**: [Official docs](https://docs.lizardbyte.dev/projects/sunshine)
+
+## Additional Resources
+
+For more detailed contribution guidelines, see the organization-level documentation:
+
+- [LizardByte Contributing Guide](https://docs.lizardbyte.dev/latest/developers/contributing.html)
+- [Sunshine GitHub Repository](https://github.com/LizardByte/Sunshine)
+- [CrowdIn Translation Project](https://translate.lizardbyte.dev)
+
+## Thank You!
+
+Your contributions make Sunshine better for everyone. Whether you're fixing a typo, translating a string, or implementing a major feature - thank you for being part of the community!
+
+<CardGroup cols={2}>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/LizardByte/Sunshine">
+    Start contributing on GitHub
+  </Card>
+  <Card title="Translation Project" icon="language" href="https://translate.lizardbyte.dev">
+    Help translate Sunshine
+  </Card>
+</CardGroup>

@@ -1,0 +1,206 @@
+---
+title: Docker Installation
+description: Run Sunshine in Docker containers for containerized game streaming
+---
+
+<Warning>
+The Docker images are not recommended for most users. They are primarily intended for advanced use cases and custom container builds.
+</Warning>
+
+Docker images are available on [Docker Hub](https://hub.docker.com/repository/docker/lizardbyte/sunshine) and [GitHub Container Registry](https://github.com/orgs/LizardByte/packages?repo_name=sunshine).
+
+## Image Tags
+
+Sunshine images are available with the following tag format: `<SUNSHINE_VERSION>-<SUNSHINE_OS>`
+
+### Version Options
+
+- `latest` - Latest stable release
+- `master` - Latest development build
+- `vX.X.X` - Specific version number
+- Commit hash - Specific commit
+
+### OS Options
+
+- `debian-bookworm`
+- `ubuntu-22.04`
+- `ubuntu-24.04`
+
+### Example Tags
+
+- `latest-ubuntu-24.04`
+- `v0.23.1-debian-bookworm`
+- `master-ubuntu-22.04`
+
+<Note>
+View all available tags on [Docker Hub](https://hub.docker.com/r/lizardbyte/sunshine/tags) or [GHCR](https://github.com/LizardByte/Sunshine/pkgs/container/sunshine/versions).
+</Note>
+
+## Supported Architectures
+
+Specifying `lizardbyte/sunshine:latest-<SUNSHINE_OS>` or `ghcr.io/lizardbyte/sunshine:latest-<SUNSHINE_OS>` should retrieve the correct image for your architecture.
+
+| Tag Suffix | amd64/x86_64 | arm64/aarch64 |
+|------------|--------------|---------------|
+| debian-bookworm | ✅ | ✅ |
+| ubuntu-22.04 | ✅ | ✅ |
+| ubuntu-24.04 | ✅ | ✅ |
+
+## Installation Methods
+
+<Tabs>
+  <Tab title="docker run">
+    Create and run the container (substitute your `<values>`):
+
+    ```bash
+    docker run -d \
+      --device /dev/dri/ \
+      --name=sunshine \
+      --restart=unless-stopped \
+      --ipc=host \
+      -e PUID=<uid> \
+      -e PGID=<gid> \
+      -e TZ=<timezone> \
+      -v <path to data>:/config \
+      -p 47984-47990:47984-47990/tcp \
+      -p 48010:48010 \
+      -p 47998-48000:47998-48000/udp \
+      lizardbyte/sunshine:latest-ubuntu-24.04
+    ```
+  </Tab>
+
+  <Tab title="docker-compose">
+    Create a `docker-compose.yml` file with the following contents (substitute your `<values>`):
+
+    ```yaml
+    version: '3'
+    services:
+      sunshine:
+        image: lizardbyte/sunshine:latest-ubuntu-24.04
+        container_name: sunshine
+        restart: unless-stopped
+        volumes:
+          - <path to data>:/config
+        environment:
+          - PUID=<uid>
+          - PGID=<gid>
+          - TZ=<timezone>
+        ipc: host
+        devices:
+          - /dev/dri:/dev/dri
+        ports:
+          - "47984-47990:47984-47990/tcp"
+          - "48010:48010"
+          - "47998-48000:47998-48000/udp"
+    ```
+
+    Then start the container:
+
+    ```bash
+    docker-compose up -d
+    ```
+  </Tab>
+
+  <Tab title="podman run">
+    Create and run the container (substitute your `<values>`):
+
+    ```bash
+    podman run -d \
+      --device /dev/dri/ \
+      --name=sunshine \
+      --restart=unless-stopped \
+      --userns=keep-id \
+      -e PUID=<uid> \
+      -e PGID=<gid> \
+      -e TZ=<timezone> \
+      -v <path to data>:/config \
+      -p 47984-47990:47984-47990/tcp \
+      -p 48010:48010 \
+      -p 47998-48000:47998-48000/udp \
+      lizardbyte/sunshine:latest-ubuntu-24.04
+    ```
+  </Tab>
+</Tabs>
+
+## Configuration Parameters
+
+### Port Mappings
+
+All the ports listed below are required for Sunshine to function properly.
+
+| Parameter | Function | Required |
+|-----------|----------|----------|
+| `-p 47984-47990:47984-47990/tcp` | Sunshine streaming ports | Yes |
+| `-p 48010:48010` | Sunshine HTTP/HTTPS port | Yes |
+| `-p 47998-48000:47998-48000/udp` | Sunshine UDP ports | Yes |
+| `-p <port>:47990` | Web UI Port (customizable) | Yes |
+
+<Note>
+The internal port must be `47990`, but the external port may be changed (e.g. `-p 8080:47990`).
+</Note>
+
+### Volume Mappings
+
+| Parameter | Function | Example | Required |
+|-----------|----------|---------|----------|
+| `-v <path to data>:/config` | Configuration directory | `/home/sunshine` | Yes |
+
+<Tip>
+The configuration file will be saved to `/config` in the container.
+</Tip>
+
+### Environment Variables
+
+| Parameter | Function | Example | Required |
+|-----------|----------|---------|----------|
+| `-e PUID=<uid>` | User ID | `1001` | No |
+| `-e PGID=<gid>` | Group ID | `1001` | No |
+| `-e TZ=<timezone>` | Timezone ([TZ value](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)) | `America/New_York` | No |
+
+### User / Group Identifiers
+
+When using data volumes (`-v` flags) permissions issues can arise between the host OS and the container. To avoid this issue you can specify the user PUID and group PGID. Ensure the data volume directory on the host is owned by the same user you specify.
+
+To find your user and group IDs:
+
+```bash
+id dockeruser
+```
+
+Output:
+```
+uid=1001(dockeruser) gid=1001(dockergroup) groups=1001(dockergroup)
+```
+
+<Warning>
+If you want to change the PUID or PGID after the image has been built, it will require rebuilding the image.
+</Warning>
+
+## Building Custom Containers
+
+This image provides a method for you to easily use the latest Sunshine release in your own docker projects. It is not intended to use as a standalone container at this point, and should be considered experimental.
+
+```dockerfile
+ARG SUNSHINE_VERSION=latest
+ARG SUNSHINE_OS=ubuntu-22.04
+FROM lizardbyte/sunshine:${SUNSHINE_VERSION}-${SUNSHINE_OS}
+
+# install Steam, Wayland, etc.
+
+ENTRYPOINT steam && sunshine
+```
+
+### Build Arguments
+
+- **SUNSHINE_VERSION**: `latest`, `master`, `vX.X.X`, or commit hash
+- **SUNSHINE_OS**: `debian-bookworm`, `ubuntu-22.04`, or `ubuntu-24.04`
+
+## Projects Using Sunshine
+
+This is a list of docker projects using Sunshine:
+
+- [Games on Whales](https://games-on-whales.github.io)
+
+<Tip>
+For additional configuration, it is recommended to reference the [Games on Whales sunshine config](https://github.com/games-on-whales/gow/blob/2e442292d79b9d996f886b8a03d22b6eb6bddf7b/compose/streamers/sunshine.yml).
+</Tip>

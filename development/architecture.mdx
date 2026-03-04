@@ -1,0 +1,449 @@
+---
+title: Architecture Overview
+description: Understanding Sunshine's internal architecture, component design, and streaming pipeline
+---
+
+Sunshine is designed with a modular architecture that separates platform-specific code from core streaming logic. This document provides an overview of the system architecture and key components.
+
+## High-Level Architecture
+
+Sunshine follows a layered architecture:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Client (Moonlight)                   │
+└─────────────────────────────────────────────────────────┘
+                          ▲
+                          │ RTSP/RTP/UDP
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Network Layer (RTSP)                  │
+│  ┌─────────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │  nvhttp.cpp │  │ rtsp.cpp │  │  network.cpp     │  │
+│  │ (Discovery) │  │(Sessions)│  │ (UDP Transport)  │  │
+│  └─────────────┘  └──────────┘  └──────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+                          ▲
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Streaming Pipeline                    │
+│  ┌─────────────┐              ┌──────────────────┐     │
+│  │ stream.cpp  │◄────────────►│  process.cpp     │     │
+│  │  (Session   │              │  (App Lifecycle) │     │
+│  │  Management)│              └──────────────────┘     │
+│  └─────────────┘                                        │
+│         ▲                                               │
+│         │                                               │
+│         ▼                                               │
+│  ┌─────────────┐              ┌──────────────────┐     │
+│  │ video.cpp   │              │  audio.cpp       │     │
+│  │ (Capture &  │              │  (Capture &      │     │
+│  │  Encode)    │              │   Encode)        │     │
+│  └─────────────┘              └──────────────────┘     │
+└─────────────────────────────────────────────────────────┘
+                          ▲
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                  Platform Abstraction                   │
+│  ┌──────────┐  ┌───────────┐  ┌──────────────────┐    │
+│  │  Linux   │  │  Windows  │  │     macOS        │    │
+│  │ (VAAPI,  │  │  (DXGI,   │  │ (VideoToolbox)   │    │
+│  │  KMS,    │  │   WGC,    │  │                  │    │
+│  │  X11,    │  │  DirectX) │  │                  │    │
+│  │ Wayland) │  │           │  │                  │    │
+│  └──────────┘  └───────────┘  └──────────────────┘    │
+└─────────────────────────────────────────────────────────┘
+                          ▲
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Hardware Encoders                     │
+│  ┌──────────┐  ┌───────────┐  ┌──────────────────┐    │
+│  │   NVENC  │  │   AMF     │  │   QuickSync      │    │
+│  │ (NVIDIA) │  │   (AMD)   │  │    (Intel)       │    │
+│  └──────────┘  └───────────┘  └──────────────────┘    │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Core Components
+
+### Application Entry and Configuration
+
+#### main.cpp (`src/main.cpp:1`)
+
+The entry point of the application, responsible for:
+- Command-line argument parsing
+- Logging initialization
+- Service/daemon mode setup
+- Platform-specific initialization
+- Main event loop
+
+#### config.cpp (`src/config.cpp:1`)
+
+Configuration management system that:
+- Parses configuration files
+- Validates settings
+- Provides default values
+- Handles runtime configuration updates
+- Manages encoder/decoder presets
+
+**Configuration files:**
+- Linux: `~/.config/sunshine/sunshine.conf`
+- Windows: `%APPDATA%\sunshine\sunshine.conf`
+- macOS: `~/Library/Application Support/Sunshine/sunshine.conf`
+
+#### confighttp.cpp (`src/confighttp.cpp:1`)
+
+Web UI backend providing:
+- REST API for configuration
+- Client pairing endpoints
+- Application management
+- PIN authentication
+- Configuration import/export
+
+### Network Layer
+
+#### nvhttp.cpp (`src/nvhttp.cpp:1`)
+
+Implements NVIDIA GameStream-compatible HTTP server for:
+- Client discovery (mDNS/SSDP)
+- Server info queries
+- Client pairing
+- Application listing
+- Launch/resume/quit commands
+
+**Key endpoints:**
+- `/serverinfo` - Server capabilities and status
+- `/pair` - Client pairing initiation
+- `/applist` - Available applications
+- `/launch` - Start streaming session
+
+#### rtsp.cpp (`src/rtsp.cpp:1`)
+
+RTSP (Real Time Streaming Protocol) session management:
+- RTSP handshake and negotiation
+- SDP (Session Description Protocol) generation
+- Video/audio stream setup
+- Session lifecycle management
+
+#### network.cpp (`src/network.cpp:1`)
+
+Low-level network operations:
+- UDP socket management
+- Port forwarding via UPnP
+- Network interface enumeration
+- Packet transmission
+
+### Streaming Pipeline
+
+#### stream.cpp (`src/stream.cpp:1`)
+
+Central streaming coordinator that:
+- Manages active streaming sessions
+- Coordinates video and audio streams
+- Handles client connection/disconnection
+- Implements stream synchronization
+- Manages bitrate adaptation
+
+**Session lifecycle:**
+1. Client connects via RTSP
+2. Stream negotiation (codec, resolution, framerate)
+3. Start video and audio capture
+4. Continuous encoding and transmission
+5. Handle client input
+6. Session teardown on disconnect
+
+#### video.cpp (`src/video.cpp:1`)
+
+Video capture and encoding pipeline:
+- Platform-specific capture initialization
+- Frame acquisition and timing
+- Color space conversion
+- Hardware encoder integration
+- H.264/H.265/AV1 encoding
+- HDR tone mapping
+- Adaptive bitrate control
+
+**Encoding flow:**
+```
+Capture → Color Conversion → Encoder → Packetizer → Network
+```
+
+#### video_colorspace.cpp (`src/video_colorspace.cpp:1`)
+
+Color space management:
+- Color space conversions (RGB, YUV, NV12)
+- HDR metadata handling
+- Color primaries and transfer functions
+
+#### audio.cpp (`src/audio.cpp:1`)
+
+Audio capture and encoding:
+- Platform-specific audio capture
+- Opus encoding
+- Multiple audio source support
+- Audio synchronization with video
+
+### Input Handling
+
+#### input.cpp (`src/input.cpp:1`)
+
+Cross-platform input processing:
+- Keyboard input translation
+- Mouse movement and clicks
+- Gamepad emulation
+- Absolute vs. relative mouse modes
+- Keyboard layout mapping
+
+**Supported gamepad types:**
+- Xbox 360 (Windows)
+- Xbox One/Series (Linux, FreeBSD)
+- DualShock 4 (Windows)
+- DualSense (Linux)
+- Nintendo Switch Pro (Linux, FreeBSD)
+
+### Process Management
+
+#### process.cpp (`src/process.cpp:1`)
+
+Application lifecycle management:
+- Application launching and termination
+- Process monitoring
+- Working directory management
+- Environment variable handling
+- Command preparation and execution
+
+### Security and Cryptography
+
+#### crypto.cpp (`src/crypto.cpp:1`)
+
+Cryptographic operations:
+- Client pairing and PIN verification
+- AES encryption/decryption
+- Certificate generation and management
+- Secure key exchange
+
+## Platform-Specific Code
+
+Sunshine abstracts platform-specific functionality through a common interface defined in `src/platform/common.h`. Each platform implements this interface differently.
+
+### Platform Directory Structure
+
+```
+src/platform/
+├── common.h              # Platform abstraction interface
+├── linux/
+│   ├── audio.cpp         # PulseAudio/ALSA capture
+│   ├── cuda.cpp          # CUDA/NVENC support
+│   ├── cuda.cu           # CUDA kernels
+│   ├── graphics.cpp      # OpenGL/Vulkan integration
+│   ├── kmsgrab.cpp       # KMS/DRM capture (direct framebuffer)
+│   ├── vaapi.cpp         # VAAPI encoding (Intel/AMD)
+│   ├── wayland.cpp       # Wayland protocol handling
+│   ├── wlgrab.cpp        # Wayland capture
+│   ├── x11grab.cpp       # X11 capture (XShm)
+│   ├── portalgrab.cpp    # XDG Desktop Portal capture
+│   ├── misc.cpp          # Platform utilities
+│   ├── publish.cpp       # Service publishing (Avahi)
+│   └── input/
+│       └── ...           # evdev-based input emulation
+├── windows/
+│   ├── audio.cpp         # WASAPI audio capture
+│   ├── display_base.cpp  # Common display functionality
+│   ├── display_vram.cpp  # DXGI Desktop Duplication
+│   ├── display_wgc.cpp   # Windows.Graphics.Capture
+│   ├── display_ram.cpp   # RAM-based capture fallback
+│   ├── input.cpp         # Virtual input (ViGEm)
+│   ├── misc.cpp          # Platform utilities
+│   ├── publish.cpp       # Service publishing
+│   └── nvprefs/          # NVIDIA driver settings
+│       └── ...           # GeForce Experience integration
+└── macos/
+    ├── av_video.m        # AVFoundation video capture
+    ├── av_audio.m        # AVFoundation audio capture
+    ├── display.mm        # Screen capture management
+    ├── input.cpp         # CGEvent-based input
+    ├── misc.mm           # Platform utilities
+    ├── microphone.mm     # Microphone capture
+    └── publish.cpp       # Service publishing (Bonjour)
+```
+
+### Linux Platform
+
+#### Capture Methods
+
+**X11 Capture** (`x11grab.cpp`):
+- Uses XShm (X Shared Memory) extension
+- Fast for software encoding
+- Works with most desktop environments
+
+**Wayland Capture** (`wlgrab.cpp`):
+- Uses wlr-screencopy protocol
+- Direct buffer access
+- Best for Wayland compositors
+
+**KMS Capture** (`kmsgrab.cpp`):
+- Direct DRM/KMS framebuffer access
+- Lowest latency, highest performance
+- Requires `CAP_SYS_ADMIN` capability
+- Works without X11/Wayland
+
+**Portal Capture** (`portalgrab.cpp`):
+- Uses XDG Desktop Portal
+- Works in sandboxed environments (Flatpak)
+- Requires user permission
+
+**NvFBC Capture** (`cuda.cpp`):
+- NVIDIA's framebuffer capture API
+- Lowest overhead for NVIDIA GPUs
+- X11 only (no Wayland support yet)
+
+#### Encoding Methods
+
+**VAAPI** (`vaapi.cpp`):
+- Hardware encoding via VA-API
+- Supports Intel QuickSync, AMD VCE
+- Works with open-source drivers
+
+**NVENC** (`cuda.cpp`):
+- NVIDIA's hardware encoder
+- Requires CUDA Toolkit
+- Best quality for NVIDIA GPUs
+
+### Windows Platform
+
+#### Capture Methods
+
+**DXGI Desktop Duplication** (`display_vram.cpp`):
+- DirectX-based screen capture
+- Works as a service
+- Best performance and compatibility
+
+**Windows.Graphics.Capture** (`display_wgc.cpp`):
+- Modern Windows 10+ API
+- Per-window capture support
+- Does not work in service mode
+
+**RAM Capture** (`display_ram.cpp`):
+- Fallback method
+- Copies to system RAM
+- Lower performance
+
+#### Input Emulation
+
+- Uses **ViGEmBus** for virtual gamepad creation
+- Supports Xbox 360 and DualShock 4 controllers
+- Keyboard/mouse via Windows Input API
+
+### macOS Platform
+
+#### Capture and Encoding
+
+**AVFoundation** (`av_video.m`):
+- Native screen capture API
+- Integrated with Video Toolbox
+
+**Video Toolbox** (via FFmpeg):
+- Hardware-accelerated H.264/H.265 encoding
+- Uses Apple's encoders (Intel QuickSync, Apple Silicon)
+
+#### Input Handling
+
+- Uses **CGEvent** API for input injection
+- Virtual display support
+
+## Encoder Integration
+
+Sunshine uses FFmpeg's libavcodec for encoding, with hardware acceleration where available.
+
+### Encoder Selection
+
+The encoder is selected based on:
+1. Platform capabilities
+2. GPU vendor
+3. User configuration
+4. Codec support
+
+**Encoder priority (example on Linux with NVIDIA GPU):**
+1. `nvenc` (NVIDIA NVENC)
+2. `vaapi` (if NVENC unavailable)
+3. `software` (libx264/libx265 fallback)
+
+### Supported Codecs
+
+- **H.264 (AVC)**: Universal support, best compatibility
+- **H.265 (HEVC)**: Better compression, 4K streaming
+- **AV1**: Future codec, best compression (limited hardware support)
+
+### HDR Support
+
+HDR streaming requires:
+- H.265 or AV1 codec
+- Compatible GPU encoder
+- HDR-capable display on client
+- Color space metadata passthrough
+
+## Threading Model
+
+Sunshine uses multiple threads for different tasks:
+
+### Thread Pools
+
+**Main Threads:**
+- **Main thread**: Event loop, UI, configuration
+- **Network thread**: UDP packet reception/transmission
+- **Video capture thread**: Frame acquisition
+- **Video encode thread**: Encoding pipeline
+- **Audio capture thread**: Audio acquisition
+- **Audio encode thread**: Audio encoding
+- **Input thread**: Input event processing
+
+**Thread Utilities:**
+- `thread_pool.h` (`src/thread_pool.h:1`): Generic thread pool
+- `task_pool.h` (`src/task_pool.h:1`): Task-based parallelism
+- `thread_safe.h` (`src/thread_safe.h:1`): Thread-safe data structures
+
+### Synchronization
+
+Synchronization primitives:
+- `sync.h` (`src/sync.h:1`): Mutex, condition variables, atomics
+- `move_by_copy.h` (`src/move_by_copy.h:1`): Move semantics helpers
+
+## System Tray
+
+`system_tray.cpp` (`src/system_tray.cpp:1`) provides:
+- System tray icon
+- Quick access menu
+- Status notifications
+- Application control
+
+Implemented using:
+- **Linux**: libappindicator
+- **Windows**: Native Win32 API
+- **macOS**: NSStatusBar
+
+## Logging
+
+`logging.cpp` (`src/logging.cpp:1`) provides structured logging:
+- Multiple log levels (debug, info, warning, error, fatal)
+- File and console output
+- Platform-specific integration (syslog, Event Viewer)
+- Thread-safe logging
+
+**Log locations:**
+- Linux: `~/.config/sunshine/sunshine.log`
+- Windows: `%APPDATA%\sunshine\sunshine.log`
+- macOS: `~/Library/Application Support/Sunshine/sunshine.log`
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Learn how to contribute to Sunshine
+  </Card>
+  <Card title="Building" icon="hammer" href="/development/building">
+    Build Sunshine from source
+  </Card>
+</CardGroup>

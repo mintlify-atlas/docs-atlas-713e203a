@@ -1,0 +1,464 @@
+---
+title: Audio & Video Configuration
+description: Configure encoders, resolution, bitrate, HDR, and audio settings
+---
+
+Audio and video settings control the quality and performance of your stream. Sunshine supports multiple hardware encoders (NVIDIA, AMD, Intel) and software encoding.
+
+## Audio Configuration
+
+<ParamField path="audio_sink" type="string" default="Default audio device">
+  The name of the audio sink used for audio loopback.
+
+  <Tabs>
+    <Tab title="Windows">
+      Use the included tool to find audio device names:
+      ```bash
+      %ProgramFiles%\Sunshine\tools\audio-info.exe
+      ```
+      
+      Example:
+      ```bash
+      audio_sink = Speakers (High Definition Audio Device)
+      ```
+
+      For devices with identical names, use the Device ID instead.
+    </Tab>
+    
+    <Tab title="Linux (PulseAudio)">
+      Find audio sink names:
+      ```bash
+      pacmd list-sinks | grep "name:"
+      ```
+      
+      Example:
+      ```bash
+      audio_sink = alsa_output.pci-0000_09_00.3.analog-stereo
+      ```
+    </Tab>
+    
+    <Tab title="Linux (PipeWire)">
+      Find audio sink names:
+      ```bash
+      pactl info | grep Source
+      # If Source doesn't work, try:
+      pactl info | grep Sink
+      ```
+    </Tab>
+    
+    <Tab title="macOS">
+      Sunshine can only access microphones on macOS. To stream system audio, use:
+      - [Soundflower](https://github.com/mattingalls/Soundflower)
+      - [BlackHole](https://github.com/ExistentialAudio/BlackHole)
+      
+      Example:
+      ```bash
+      audio_sink = BlackHole 2ch
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="virtual_sink" type="string" default="None">
+  A virtual audio device that allows streaming audio while muting speakers.
+
+  **Virtual Audio Options:**
+  - Steam Streaming Speakers (all platforms) - requires Steam installation
+  - [Virtual Audio Cable](https://vb-audio.com/Cable) (Windows/macOS)
+
+  ```bash
+  virtual_sink = Steam Streaming Speakers
+  ```
+</ParamField>
+
+<ParamField path="stream_audio" type="boolean" default="enabled">
+  Whether to stream audio. Disable for headless displays used as second monitors.
+
+  ```bash
+  stream_audio = disabled
+  ```
+</ParamField>
+
+<ParamField path="install_steam_audio_drivers" type="boolean" default="enabled">
+  Install Steam Streaming Speakers driver (if Steam is installed) for surround sound and host audio muting.
+
+  <Note>Windows only</Note>
+
+  ```bash
+  install_steam_audio_drivers = enabled
+  ```
+</ParamField>
+
+## Display Selection
+
+<ParamField path="adapter_name" type="string" default="Default video card">
+  Select the video card to use for encoding.
+
+  <Tabs>
+    <Tab title="Windows">
+      Use the included tool to find adapter names:
+      ```bash
+      %ProgramFiles%\Sunshine\tools\dxgi-info.exe
+      ```
+      
+      Example:
+      ```bash
+      adapter_name = Radeon RX 580 Series
+      ```
+    </Tab>
+    
+    <Tab title="Linux (VA-API)">
+      List VA-API capable devices:
+      ```bash
+      ls /dev/dri/renderD*
+      
+      # Check device capabilities
+      vainfo --display drm --device /dev/dri/renderD129 | \
+        grep -E "((VAProfileH264High|VAProfileHEVCMain|VAProfileHEVCMain10).*VAEntrypointEncSlice)|Driver version"
+      ```
+      
+      Example:
+      ```bash
+      adapter_name = /dev/dri/renderD128
+      ```
+      
+      <Note>Device must support at minimum: `VAProfileH264High : VAEntrypointEncSlice`</Note>
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="output_name" type="string" default="Default display">
+  Select the display to stream.
+
+  Check Sunshine logs during startup to see detected displays and their IDs.
+
+  <Tabs>
+    <Tab title="Windows">
+      Use the `device_id` value from startup logs:
+      ```bash
+      output_name = {daeac860-f4db-5208-b1f5-cf59444fb768}
+      ```
+    </Tab>
+    
+    <Tab title="Linux/macOS">
+      Use the numeric `id` value from startup logs:
+      ```bash
+      output_name = 0
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+## Video Encoder Selection
+
+<ParamField path="encoder" type="string" default="Auto">
+  Force a specific encoder. Sunshine uses the first available encoder by default.
+
+  **Options:**
+  - `nvenc` - NVIDIA graphics cards
+  - `quicksync` - Intel graphics cards  
+  - `amdvce` - AMD graphics cards
+  - `vaapi` - VA-API (AMD, Intel on Linux)
+  - `software` - CPU encoding
+
+  ```bash
+  encoder = nvenc
+  ```
+</ParamField>
+
+<ParamField path="capture" type="string" default="Auto">
+  Force a specific screen capture method.
+
+  **Options:**
+  - `nvfbc` - NVIDIA Frame Buffer Capture (Linux, fastest for NVIDIA)
+  - `wlr` - Wayland/wlroots compositors (Linux)
+  - `kms` - DRM/KMS kernel capture (Linux, requires `cap_sys_admin`)
+  - `x11` - XCB capture (FreeBSD/Linux, slowest)
+  - `ddx` - DirectX Desktop Duplication (Windows)
+  - `wgc` - Windows.Graphics.Capture (Windows, beta, not compatible with service)
+
+  ```bash
+  capture = ddx
+  ```
+</ParamField>
+
+## Video Quality
+
+<ParamField path="max_bitrate" type="number" default="0">
+  Maximum bitrate in Kbps. Set to 0 to always use the bitrate requested by Moonlight.
+
+  ```bash
+  max_bitrate = 5000
+  ```
+</ParamField>
+
+<ParamField path="minimum_fps_target" type="number" default="0">
+  Lowest effective framerate for bandwidth optimization.
+
+  - `0` - Use half the stream's FPS as minimum
+  - `1-1000` - Specify custom value
+
+  ```bash
+  minimum_fps_target = 30
+  ```
+</ParamField>
+
+<ParamField path="qp" type="number" default="28">
+  Quantization Parameter for devices without Constant Bit Rate support.
+
+  <Warning>
+  Higher values = more compression but lower quality
+  </Warning>
+
+  ```bash
+  qp = 28
+  ```
+</ParamField>
+
+## Video Codec Support
+
+<ParamField path="hevc_mode" type="number" default="0">
+  Allow HEVC (H.265) video streams.
+
+  **Options:**
+  - `0` - Auto-detect based on encoder capabilities (recommended)
+  - `1` - Disable HEVC
+  - `2` - Enable HEVC Main profile
+  - `3` - Enable HEVC Main and Main10 (HDR)
+
+  <Warning>
+  HEVC is more CPU-intensive with software encoding
+  </Warning>
+
+  ```bash
+  hevc_mode = 2
+  ```
+</ParamField>
+
+<ParamField path="av1_mode" type="number" default="0">
+  Allow AV1 video streams.
+
+  **Options:**
+  - `0` - Auto-detect based on encoder capabilities (recommended)
+  - `1` - Disable AV1
+  - `2` - Enable AV1 Main 8-bit
+  - `3` - Enable AV1 Main 8-bit and 10-bit (HDR)
+
+  <Warning>
+  AV1 is more CPU-intensive with software encoding
+  </Warning>
+
+  ```bash
+  av1_mode = 2
+  ```
+</ParamField>
+
+## NVIDIA NVENC Settings
+
+<Accordion title="NVENC Encoder Options">
+
+<ParamField path="nvenc_preset" type="number" default="1">
+  Performance preset (1=fastest, 7=slowest). Higher presets improve compression at the cost of latency.
+
+  ```bash
+  nvenc_preset = 1
+  ```
+</ParamField>
+
+<ParamField path="nvenc_twopass" type="string" default="quarter_res">
+  Enable two-pass encoding for better bitrate distribution.
+
+  - `disabled` - One pass (fastest)
+  - `quarter_res` - Two passes, first at quarter resolution
+  - `full_res` - Two passes, first at full resolution
+
+  ```bash
+  nvenc_twopass = quarter_res
+  ```
+</ParamField>
+
+<ParamField path="nvenc_spatial_aq" type="boolean" default="disabled">
+  Assign higher QP to flat regions. Recommended for low bitrate streaming.
+
+  ```bash
+  nvenc_spatial_aq = enabled
+  ```
+</ParamField>
+
+<ParamField path="nvenc_h264_cavlc" type="boolean" default="disabled">
+  Use CAVLC entropy coding instead of CABAC. Requires 10% more bitrate but faster software decoding.
+
+  ```bash
+  nvenc_h264_cavlc = disabled
+  ```
+</ParamField>
+
+</Accordion>
+
+## Intel QuickSync Settings
+
+<Accordion title="QuickSync Encoder Options">
+
+<ParamField path="qsv_preset" type="string" default="medium">
+  Encoder preset.
+
+  Options: `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, `veryslow`
+
+  ```bash
+  qsv_preset = medium
+  ```
+</ParamField>
+
+<ParamField path="qsv_coder" type="string" default="auto">
+  Entropy encoding for H.264.
+
+  - `auto` - Let FFmpeg decide
+  - `cabac` - Better quality
+  - `cavlc` - Faster decode
+
+  ```bash
+  qsv_coder = auto
+  ```
+</ParamField>
+
+</Accordion>
+
+## AMD AMF Settings
+
+<Accordion title="AMD Encoder Options">
+
+<ParamField path="amd_usage" type="string" default="ultralowlatency">
+  Encoder usage profile.
+
+  - `transcoding` - Slowest, highest quality
+  - `webcam` - Slow
+  - `lowlatency_high_quality` - Fast
+  - `lowlatency` - Faster  
+  - `ultralowlatency` - Fastest
+
+  ```bash
+  amd_usage = ultralowlatency
+  ```
+</ParamField>
+
+<ParamField path="amd_rc" type="string" default="vbr_latency">
+  Rate control mode.
+
+  - `cqp` - Constant QP
+  - `cbr` - Constant bitrate
+  - `vbr_latency` - Variable bitrate, latency constrained
+  - `vbr_peak` - Variable bitrate, peak constrained
+
+  ```bash
+  amd_rc = vbr_latency
+  ```
+</ParamField>
+
+<ParamField path="amd_quality" type="string" default="balanced">
+  Quality profile.
+
+  Options: `speed`, `balanced`, `quality`
+
+  ```bash
+  amd_quality = balanced
+  ```
+</ParamField>
+
+<ParamField path="amd_vbaq" type="boolean" default="enabled">
+  Variance Based Adaptive Quantization for improved visual quality.
+
+  ```bash
+  amd_vbaq = enabled
+  ```
+</ParamField>
+
+</Accordion>
+
+## Software Encoder Settings
+
+<Accordion title="Software Encoder Options">
+
+<ParamField path="sw_preset" type="string" default="superfast">
+  Encoder preset. Slower presets provide better compression.
+
+  Options: `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, `veryslow`
+
+  ```bash
+  sw_preset = superfast
+  ```
+</ParamField>
+
+<ParamField path="sw_tune" type="string" default="zerolatency">
+  Tuning preset.
+
+  - `film` - High quality movie content
+  - `animation` - Cartoons
+  - `grain` - Old grainy film
+  - `stillimage` - Slideshow content
+  - `fastdecode` - Faster decoding
+  - `zerolatency` - Low-latency streaming
+
+  ```bash
+  sw_tune = zerolatency
+  ```
+</ParamField>
+
+</Accordion>
+
+## Windows Display Configuration
+
+<Note>The following settings apply to Windows only</Note>
+
+<Accordion title="Windows Display Options">
+
+<ParamField path="dd_configuration_option" type="string" default="disabled">
+  Mandatory verification and configuration for display devices.
+
+  - `disabled` - No additional configuration
+  - `verify_only` - Verify display is active
+  - `ensure_active` - Activate if inactive
+  - `ensure_primary` - Activate and make primary
+  - `ensure_only_display` - Activate and disable others
+
+  ```bash
+  dd_configuration_option = ensure_only_display
+  ```
+</ParamField>
+
+<ParamField path="dd_resolution_option" type="string" default="auto">
+  Resolution configuration.
+
+  - `disabled` - No configuration
+  - `auto` - Use client resolution
+  - `manual` - Use manual resolution (requires dd_manual_resolution)
+
+  <Note>Requires "Optimize game settings" enabled in Moonlight</Note>
+
+  ```bash
+  dd_resolution_option = auto
+  ```
+</ParamField>
+
+<ParamField path="dd_hdr_option" type="string" default="auto">
+  HDR configuration.
+
+  - `disabled` - No HDR configuration
+  - `auto` - Match client HDR state
+
+  ```bash
+  dd_hdr_option = auto
+  ```
+</ParamField>
+
+</Accordion>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Input Configuration" icon="gamepad" href="/configuration/input">
+    Configure gamepad and input devices
+  </Card>
+  <Card title="Network Settings" icon="network-wired" href="/configuration/network">
+    Set up ports and network access
+  </Card>
+</CardGroup>

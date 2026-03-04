@@ -1,0 +1,226 @@
+---
+title: Clients
+description: API endpoints for managing paired clients
+---
+
+These endpoints allow you to manage Moonlight clients that have been paired with Sunshine.
+
+## GET /api/clients/list
+
+Get the list of all paired clients.
+
+### Authentication
+
+Required
+
+### Response
+
+<ResponseField name="named_certs" type="array">
+  Array of paired client objects
+  
+  <ResponseField name="name" type="string">
+    Friendly name of the client (e.g., "Living Room PC")
+  </ResponseField>
+  
+  <ResponseField name="uuid" type="string">
+    Unique identifier for the client
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="status" type="boolean">
+  Always `true` for successful requests
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -u admin:password \
+  https://localhost:47990/api/clients/list
+```
+
+### Example Response
+
+```json
+{
+  "named_certs": [
+    {
+      "name": "Living Room PC",
+      "uuid": "6f3a1b2c-4d5e-6f7a-8b9c-0d1e2f3a4b5c"
+    },
+    {
+      "name": "Bedroom Laptop",
+      "uuid": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
+    }
+  ],
+  "status": true
+}
+```
+
+### Notes
+
+- Clients are paired through the Moonlight pairing process
+- Each client is identified by its UUID
+- Client names are set during the pairing process
+
+## POST /api/clients/unpair
+
+Unpair a specific client by UUID.
+
+### Authentication
+
+Required
+
+### Request Headers
+
+```
+Content-Type: application/json
+```
+
+### Request Body
+
+<ParamField body="uuid" type="string" required>
+  The UUID of the client to unpair
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the unpair operation was successful
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "uuid": "6f3a1b2c-4d5e-6f7a-8b9c-0d1e2f3a4b5c"
+  }' \
+  https://localhost:47990/api/clients/unpair
+```
+
+### Example Response
+
+```json
+{
+  "status": true
+}
+```
+
+### Notes
+
+- The unpaired client will need to go through the pairing process again to reconnect
+- If the UUID doesn't exist, the operation will still return success
+- The client's certificate is removed from the server
+
+## POST /api/clients/unpair-all
+
+Unpair all clients and terminate any active streaming sessions.
+
+### Authentication
+
+Required
+
+### Request Headers
+
+```
+Content-Type: application/json
+```
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Always `true` for successful requests
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{}' \
+  https://localhost:47990/api/clients/unpair-all
+```
+
+### Example Response
+
+```json
+{
+  "status": true
+}
+```
+
+### Notes
+
+- This removes all paired client certificates from the server
+- Any active streaming session is terminated immediately
+- All clients will need to re-pair to connect again
+- The request body can be empty JSON `{}` but the Content-Type header is required
+- Use this endpoint carefully as it affects all paired clients
+
+## Client Pairing Flow
+
+While pairing is typically done through the Moonlight client UI, you can also use the API:
+
+1. **Start Pairing**: The Moonlight client initiates pairing by sending a PIN
+2. **Submit PIN**: Use `POST /api/pin` to submit the PIN and client name (see [Configuration endpoints](/api/config#post-apipin))
+3. **Complete**: If the PIN matches, the client is paired and added to the list
+
+## Example: Complete Client Management
+
+Here's an example script to list and unpair clients:
+
+```bash
+#!/bin/bash
+
+USER="admin"
+PASS="password"
+BASE_URL="https://localhost:47990"
+
+# List all clients
+echo "Paired clients:"
+curl -s -u $USER:$PASS $BASE_URL/api/clients/list | jq '.named_certs'
+
+# Unpair a specific client
+echo "\nUnpairing client..."
+curl -s -X POST \
+  -u $USER:$PASS \
+  -H "Content-Type: application/json" \
+  -d '{"uuid": "6f3a1b2c-4d5e-6f7a-8b9c-0d1e2f3a4b5c"}' \
+  $BASE_URL/api/clients/unpair | jq '.status'
+
+# List clients again to verify
+echo "\nRemaining clients:"
+curl -s -u $USER:$PASS $BASE_URL/api/clients/list | jq '.named_certs'
+```
+
+## Python Example
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+auth = HTTPBasicAuth('admin', 'password')
+base_url = 'https://localhost:47990'
+
+# List all clients
+response = requests.get(f'{base_url}/api/clients/list', auth=auth, verify=False)
+clients = response.json()['named_certs']
+
+for client in clients:
+    print(f"Client: {client['name']} (UUID: {client['uuid']})")
+
+# Unpair a specific client
+uuid_to_unpair = clients[0]['uuid']
+response = requests.post(
+    f'{base_url}/api/clients/unpair',
+    auth=auth,
+    json={'uuid': uuid_to_unpair},
+    verify=False
+)
+
+if response.json()['status']:
+    print(f"Successfully unpaired client {uuid_to_unpair}")
+```

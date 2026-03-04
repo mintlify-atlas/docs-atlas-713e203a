@@ -1,0 +1,100 @@
+---
+title: macOS Installation
+description: Install Sunshine on macOS using the DMG installer or Homebrew
+---
+
+<Warning>
+Sunshine on macOS is experimental. Gamepads do not work.
+</Warning>
+
+Sunshine can be installed on macOS using either the DMG installer or Homebrew package manager.
+
+## Installation Methods
+
+<Tabs>
+  <Tab title="DMG Installer">
+    ### Download and Install
+
+    1. Download the DMG file from the [latest release](https://github.com/LizardByte/Sunshine/releases/latest)
+    2. Open the downloaded DMG file
+    3. Drag Sunshine to your Applications folder
+    4. Launch Sunshine from your Applications folder
+
+    ### Uninstall
+
+    1. Open Finder
+    2. Navigate to Applications
+    3. Drag Sunshine to the Trash
+    4. Empty the Trash
+  </Tab>
+
+  <Tab title="Homebrew">
+    This package requires that you have [Homebrew](https://docs.brew.sh/Installation) installed.
+
+    ### Install
+
+    ```bash
+    brew update
+    brew upgrade
+    brew tap LizardByte/homebrew
+    brew install sunshine
+    ```
+
+    ### Uninstall
+
+    ```bash
+    brew uninstall sunshine
+    ```
+
+    <Tip>
+    For beta you can replace `sunshine` with `sunshine-beta` in the above commands.
+    </Tip>
+  </Tab>
+</Tabs>
+
+## Post-Installation Setup
+
+### Permissions
+
+The first time you start Sunshine, you will be asked to grant access to screen recording and your microphone.
+
+<Steps>
+  <Step title="Screen Recording Permission">
+    When prompted, grant Sunshine permission to record your screen. This is required for streaming.
+  </Step>
+
+  <Step title="Microphone Permission">
+    When prompted, grant Sunshine permission to access your microphone. This is required for audio streaming.
+  </Step>
+</Steps>
+
+### Audio Setup
+
+Sunshine can only access microphones on macOS due to system limitations. To stream system audio use [Soundflower](https://github.com/mattingalls/Soundflower) or [BlackHole](https://github.com/ExistentialAudio/BlackHole).
+
+<Note>
+System audio capture requires third-party audio routing software like Soundflower or BlackHole.
+</Note>
+
+## Requirements
+
+- macOS 10.15 (Catalina) or later recommended
+- Screen Recording and Microphone permissions
+- Third-party audio routing software for system audio (optional)
+
+## Known Limitations
+
+<Warning>
+The following limitations currently exist on macOS:
+- Gamepads are not currently supported
+- Command Keys are not forwarded by Moonlight
+- Right Option-Key is mapped to CMD-Key
+</Warning>
+
+## Keyboard Mapping
+
+<Note>
+Command Keys are not forwarded by Moonlight. Right Option-Key is mapped to CMD-Key.
+</Note>
+
+Due to Moonlight's keyboard handling, some key combinations may not work as expected. The Right Option key can be used as an alternative to the Command key.

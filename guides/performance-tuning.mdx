@@ -1,0 +1,148 @@
+---
+title: Performance Tuning
+description: Optimize Sunshine performance with hardware-specific settings and system configurations
+---
+
+In addition to the options available in the Configuration section, there are several system-level optimizations that can help improve Sunshine's streaming performance.
+
+## Hardware-Specific Optimizations
+
+### AMD Graphics
+
+For AMD GPU users on Windows, enabling **Enhanced Sync** in AMD's graphics settings can help reduce latency by an additional frame.
+
+<Note>
+This optimization applies to both `amfenc` (AMD's hardware encoder) and `libx264` (software encoder) configurations.
+</Note>
+
+#### How to Enable Enhanced Sync
+
+<Steps>
+  <Step title="Open AMD Software">
+    Right-click on your desktop and select **AMD Software: Adrenalin Edition**
+  </Step>
+  
+  <Step title="Navigate to Graphics Settings">
+    Go to **Gaming** → **Graphics** or **Display** settings
+  </Step>
+  
+  <Step title="Enable Enhanced Sync">
+    Find and toggle **Enhanced Sync** to **On**
+  </Step>
+</Steps>
+
+### NVIDIA Graphics
+
+For NVIDIA GPU users, enabling **Fast Sync** in NVIDIA Control Panel can help reduce streaming latency.
+
+#### How to Enable Fast Sync
+
+<Steps>
+  <Step title="Open NVIDIA Control Panel">
+    Right-click on your desktop and select **NVIDIA Control Panel**
+  </Step>
+  
+  <Step title="Navigate to 3D Settings">
+    Go to **Manage 3D Settings** → **Global Settings** or **Program Settings**
+  </Step>
+  
+  <Step title="Configure Vertical Sync">
+    Find **Vertical sync** in the settings list and set it to **Fast**
+  </Step>
+</Steps>
+
+<Warning>
+If you experience stuttering with NVIDIA GPUs, try disabling `vsync:fast` instead. Performance may vary based on your specific hardware and game.
+</Warning>
+
+## Network Optimization
+
+### Testing Network Performance
+
+For real-time game streaming, network stability and consistency (low latency with minimal variance) are more important than pure bandwidth.
+
+Use [iPerf3](https://iperf.fr) to test your network:
+
+**On the Sunshine host:**
+```bash
+iperf3 -s
+```
+
+**On the client device:**
+```bash
+iperf3 -c {HostIpAddress} -t 60 -u -R -b 50M
+```
+
+<Note>
+Watch for packet loss (should be < 5%) and jitter (should be < 1 ms). For Android clients, use [PingMaster](https://play.google.com/store/apps/details?id=com.appplanex.pingmasternetworktools). For iOS, use [HE.NET Network Tools](https://apps.apple.com/us/app/he-net-network-tools/id858241710).
+</Note>
+
+### Addressing Packet Loss
+
+#### Buffer Overrun Issues
+
+If your host PC has a much faster network connection than the client device (e.g., 2.5 Gbps host with 1 Gbps client), packet loss can occur due to buffer overruns.
+
+**Solutions:**
+- Reduce the transmission speed of the host NIC
+- Configure traffic shaping rules at the OS level (Linux example below)
+
+**Linux Traffic Shaping Example:**
+```bash
+# Remove existing qdisc
+sudo tc qdisc del dev <NIC> root
+
+# Add HTB root qdisc with default class 1:1
+sudo tc qdisc add dev <NIC> root handle 1: htb default 1
+
+# Create class for full bandwidth (all other traffic)
+sudo tc class add dev <NIC> parent 1: classid 1:1 htb \
+    rate 10000mbit ceil 10000mbit burst 32k
+
+# Create class for Sunshine at 1 Gbit/s
+sudo tc class add dev <NIC> parent 1: classid 1:10 htb \
+    rate 1000mbit ceil 1000mbit burst 32k
+
+# Filter UDP port 47998 (Sunshine stream) into limited class
+sudo tc filter add dev <NIC> protocol ip parent 1: prio 1 \
+    u32 match ip protocol 17 0xff \
+    match ip sport 47998 0xffff flowid 1:10
+```
+
+<Warning>
+This configuration is not persistent across reboots. Sunshine versions > 0.23.1 include improved networking code that should alleviate buffer overrun issues.
+</Warning>
+
+#### MTU Issues
+
+Some clients may work better with a lower [MTU](https://en.wikipedia.org/wiki/Maximum_transmission_unit) value. If you experience significant packet loss (30-60%), try reducing the MTU from 1500 to 1428 on the network interface serving the stream.
+
+## Encoder Settings
+
+### AMD Encoding Latency (Linux)
+
+If you notice high encoding latencies or strong fluctuations (particularly at 4K resolution), ensure your Mesa libraries are version 24.2 or newer.
+
+<Note>
+Sunshine automatically sets the `AMD_DEBUG=lowlatencyenc` environment variable on systems with Mesa 24.2+. No manual configuration is needed.
+</Note>
+
+To verify low-latency mode is active, monitor VCLK and DCLK frequencies using `amdgpu_top`. Both should remain high during encoding rather than fluctuating.
+
+### Hardware Encoding on Linux
+
+If hardware encoding fails with Mesa drivers, you may need to manually compile Mesa with encoder support enabled:
+
+```bash
+-Dvideo-codecs=h264enc,h265enc
+```
+
+See the [Mesa3D documentation](https://docs.mesa3d.org/install.html) for complete compilation instructions.
+
+## General Performance Tips
+
+- **Resolution matching**: Stream at your client device's native resolution when possible
+- **Bitrate selection**: Higher isn't always better—match bitrate to your network capabilities
+- **Encoder choice**: Hardware encoders (NVENC, AMF, Quick Sync) typically offer better performance than software encoders
+- **Display capture**: On Linux, prefer XDG Portal capture over KMS for better compatibility
+- **Controller input**: If you experience input lag, ensure no other controllers are conflicting

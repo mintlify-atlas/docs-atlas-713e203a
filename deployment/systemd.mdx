@@ -1,0 +1,527 @@
+---
+title: systemd Service Setup
+description: Configure and manage Sunshine as a systemd service on Linux
+---
+
+## Overview
+
+Sunshine can run as a systemd service on Linux, providing automatic startup, process management, and logging integration. Two service types are available:
+
+- **sunshine.service** - Unprivileged service for XDG Portal or X11 capture
+- **sunshine-kms.service** - Privileged service for KMS (Kernel Mode Setting) capture
+
+## Prerequisites
+
+- Linux system with systemd
+- Sunshine installed from package manager
+- User account with appropriate permissions
+
+## Service Types
+
+### User Service (Recommended)
+
+Runs as your user account with access to your display session.
+
+**Best for:**
+- Desktop installations
+- X11 or Wayland capture
+- Standard gaming setups
+
+### System Service
+
+Runs as a system service with elevated privileges.
+
+**Best for:**
+- Headless servers
+- KMS capture
+- Multi-user environments
+
+## Installation
+
+<Steps>
+
+### Step 1: Verify Service Files
+
+After installing Sunshine, verify the service files exist:
+
+```bash
+# User service files
+ls -l ~/.config/systemd/user/sunshine*.service
+
+# Or system service files (if installed system-wide)
+ls -l /usr/lib/systemd/user/sunshine*.service
+```
+
+### Step 2: Create User Service Directory (if needed)
+
+```bash
+mkdir -p ~/.config/systemd/user
+```
+
+### Step 3: Choose Service Type
+
+Decide which service to use based on your needs:
+
+<CodeGroup>
+
+```bash XDG Portal / X11 (Standard)
+systemctl --user enable sunshine.service
+```
+
+```bash KMS Capture (Advanced)
+systemctl --user enable sunshine-kms.service
+```
+
+</CodeGroup>
+
+</Steps>
+
+## Service Configuration
+
+### Standard Service (sunshine.service)
+
+Example service file for unprivileged capture:
+
+```ini sunshine.service
+[Unit]
+Description=Sunshine - Self-hosted game stream host for Moonlight
+StartLimitIntervalSec=500
+StartLimitBurst=5
+Conflicts=sunshine-kms.service
+After=graphical-session.target xdg-desktop-autostart.target xdg-desktop-portal.service
+
+[Service]
+# Avoid starting Sunshine before the desktop is fully initialized
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/bin/sunshine
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+
+[Install]
+WantedBy=graphical-session.target
+```
+
+### KMS Service (sunshine-kms.service)
+
+Example service file for KMS capture:
+
+```ini sunshine-kms.service
+[Unit]
+Description=Sunshine - Self-hosted game stream host for Moonlight (KMS)
+StartLimitIntervalSec=500
+StartLimitBurst=5
+Conflicts=sunshine.service
+After=graphical-session.target xdg-desktop-autostart.target
+
+[Service]
+# Avoid starting Sunshine before the desktop is fully initialized
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/bin/sunshine
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=graphical-session.target
+```
+
+### Custom Service File
+
+To customize the service, create an override:
+
+```bash
+systemctl --user edit sunshine.service
+```
+
+Add customizations:
+
+```ini
+[Service]
+# Custom environment variables
+Environment="DISPLAY=:0"
+Environment="PULSE_SERVER=unix:/run/user/1000/pulse/native"
+
+# Custom startup delay
+ExecStartPre=/bin/sleep 10
+
+# Resource limits
+MemoryLimit=2G
+CPUQuota=80%
+```
+
+## Service Management
+
+### Enable Service (Start on Boot)
+
+<CodeGroup>
+
+```bash Standard Service
+# Disable KMS service first (if enabled)
+systemctl --user --now disable sunshine-kms.service
+
+# Enable standard service
+systemctl --user enable sunshine.service
+```
+
+```bash KMS Service
+# Disable standard service first (if enabled)
+systemctl --user --now disable sunshine.service
+
+# Enable KMS service
+systemctl --user enable sunshine-kms.service
+```
+
+</CodeGroup>
+
+### Start Service Immediately
+
+```bash
+# Start standard service
+systemctl --user start sunshine.service
+
+# Or start KMS service
+systemctl --user start sunshine-kms.service
+```
+
+### Enable and Start Together
+
+```bash
+# Enable and start in one command
+systemctl --user enable --now sunshine.service
+```
+
+### Stop Service
+
+```bash
+systemctl --user stop sunshine.service
+```
+
+### Restart Service
+
+```bash
+systemctl --user restart sunshine.service
+```
+
+### Disable Service
+
+```bash
+# Disable and stop
+systemctl --user disable --now sunshine.service
+```
+
+## Monitoring
+
+### Check Service Status
+
+```bash
+systemctl --user status sunshine.service
+```
+
+Example output:
+
+```
+● sunshine.service - Sunshine - Self-hosted game stream host
+     Loaded: loaded (/home/user/.config/systemd/user/sunshine.service; enabled)
+     Active: active (running) since Mon 2024-03-04 12:00:00 EST; 2h 15min ago
+   Main PID: 12345 (sunshine)
+      Tasks: 24 (limit: 18972)
+     Memory: 145.2M
+        CPU: 3.521s
+     CGroup: /user.slice/user-1000.slice/sunshine.service
+             └─12345 /usr/bin/sunshine
+```
+
+### View Service Logs
+
+<CodeGroup>
+
+```bash All Logs
+journalctl --user -u sunshine.service
+```
+
+```bash Follow Logs (Live)
+journalctl --user -u sunshine.service -f
+```
+
+```bash Recent Logs
+journalctl --user -u sunshine.service -n 100
+```
+
+```bash Logs Since Boot
+journalctl --user -u sunshine.service -b
+```
+
+```bash Logs with Timestamps
+journalctl --user -u sunshine.service --since "2024-03-04 12:00:00"
+```
+
+</CodeGroup>
+
+### Log Filtering
+
+```bash
+# Errors only
+journalctl --user -u sunshine.service -p err
+
+# Last hour
+journalctl --user -u sunshine.service --since "1 hour ago"
+
+# Specific date range
+journalctl --user -u sunshine.service --since "2024-03-01" --until "2024-03-04"
+```
+
+## Troubleshooting
+
+### Service Won't Start
+
+<Steps>
+
+### Step 1: Check Service Status
+
+```bash
+systemctl --user status sunshine.service
+```
+
+### Step 2: View Detailed Logs
+
+```bash
+journalctl --user -u sunshine.service -n 50
+```
+
+### Step 3: Verify Binary Location
+
+```bash
+which sunshine
+# Should output: /usr/bin/sunshine
+```
+
+### Step 4: Test Manual Start
+
+```bash
+# Stop service
+systemctl --user stop sunshine.service
+
+# Run manually to see errors
+sunshine
+```
+
+</Steps>
+
+### Display Not Available
+
+```bash
+# Set DISPLAY environment variable
+systemctl --user edit sunshine.service
+```
+
+Add:
+
+```ini
+[Service]
+Environment="DISPLAY=:0"
+```
+
+Then reload and restart:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user restart sunshine.service
+```
+
+### Service Crashes on Start
+
+Increase startup delay:
+
+```bash
+systemctl --user edit sunshine.service
+```
+
+Add:
+
+```ini
+[Service]
+ExecStartPre=/bin/sleep 10
+```
+
+### Permission Denied Errors
+
+Add user to required groups:
+
+```bash
+# Add to input group (for gamepad/keyboard/mouse)
+sudo usermod -aG input $USER
+
+# Add to video group (for GPU access)
+sudo usermod -aG video $USER
+
+# Add to audio group (for audio capture)
+sudo usermod -aG audio $USER
+
+# Log out and back in for changes to take effect
+```
+
+### Service Stops After Logout
+
+Enable lingering for your user:
+
+```bash
+sudo loginctl enable-linger $USER
+```
+
+This keeps user services running after logout.
+
+## Advanced Configuration
+
+### Resource Limits
+
+Control resource usage:
+
+```ini
+[Service]
+# Memory limit
+MemoryMax=2G
+MemoryHigh=1.5G
+
+# CPU quota (80% of one core)
+CPUQuota=80%
+
+# Process limits
+TasksMax=100
+
+# File descriptor limit
+LimitNOFILE=4096
+```
+
+### Restart Behavior
+
+```ini
+[Service]
+# Always restart (even on clean exit)
+Restart=always
+
+# Restart delay
+RestartSec=10s
+
+# Prevent restart loops
+StartLimitIntervalSec=500
+StartLimitBurst=5
+```
+
+### Environment Variables
+
+```ini
+[Service]
+# Display
+Environment="DISPLAY=:0"
+Environment="WAYLAND_DISPLAY=wayland-0"
+
+# Audio
+Environment="PULSE_SERVER=unix:/run/user/1000/pulse/native"
+
+# Custom config
+Environment="SUNSHINE_CONFIG=/home/user/.config/sunshine/sunshine.conf"
+```
+
+### Dependencies
+
+Control service startup order:
+
+```ini
+[Unit]
+# Start after these services
+After=graphical-session.target
+After=network-online.target
+After=pulseaudio.service
+
+# Require these services
+Requires=network-online.target
+
+# Stop if these services stop
+BindsTo=graphical-session.target
+```
+
+## Multiple Instances
+
+Run multiple Sunshine instances:
+
+### Create Instance Service
+
+```bash
+# Copy service file
+cp ~/.config/systemd/user/sunshine.service \
+   ~/.config/systemd/user/sunshine@.service
+```
+
+Edit for instance support:
+
+```ini sunshine@.service
+[Unit]
+Description=Sunshine Instance %i
+
+[Service]
+ExecStart=/usr/bin/sunshine /home/user/.config/sunshine/%i/sunshine.conf
+
+[Install]
+WantedBy=graphical-session.target
+```
+
+### Start Instances
+
+```bash
+# Create config directories
+mkdir -p ~/.config/sunshine/instance1
+mkdir -p ~/.config/sunshine/instance2
+
+# Start instances
+systemctl --user start sunshine@instance1.service
+systemctl --user start sunshine@instance2.service
+```
+
+## System-Wide Service
+
+For system-level installation (not recommended for most users):
+
+```bash
+# Create system service file
+sudo nano /etc/systemd/system/sunshine.service
+```
+
+```ini
+[Unit]
+Description=Sunshine Game Streaming
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sunshine
+Group=sunshine
+ExecStart=/usr/bin/sunshine
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Manage system service:
+
+```bash
+# Enable
+sudo systemctl enable sunshine.service
+
+# Start
+sudo systemctl start sunshine.service
+
+# Check status
+sudo systemctl status sunshine.service
+
+# View logs
+sudo journalctl -u sunshine.service -f
+```
+
+## Related Resources
+
+- [systemd Documentation](https://www.freedesktop.org/software/systemd/man/)
+- [systemd.service Manual](https://www.freedesktop.org/software/systemd/man/systemd.service.html)
+- [journalctl Manual](https://www.freedesktop.org/software/systemd/man/journalctl.html)

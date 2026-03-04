@@ -1,0 +1,310 @@
+---
+title: Application Examples
+description: Configuration examples for popular games, launchers, and applications
+---
+
+Not all applications behave the same way. This guide provides configuration examples to help you add games and applications to Sunshine.
+
+<Tip>
+Throughout these examples, fields not shown are left blank. You can enhance your experience by adding an image via the `Image` field or logging output via the `Output` field.
+</Tip>
+
+<Warning>
+When a working directory is not specified, it defaults to the folder where the target application resides. Specify a working directory explicitly if the application requires specific paths for assets or configuration files.
+</Warning>
+
+## Common Launchers
+
+### Desktop
+
+The most basic configuration streams your entire desktop:
+
+| Field            | Value       |
+|------------------|-------------|
+| Application Name | `Desktop`   |
+| Image            | `desktop.png` |
+
+### Steam Big Picture
+
+Steam is launched as a detached command because Steam's launcher process self-updates and the original process terminates.
+
+<Tabs>
+  <Tab title="Windows">
+    | Field                        | Value                             |
+    |------------------------------|-----------------------------------|
+    | Application Name             | `Steam Big Picture`               |
+    | Command Preparations → Undo  | `steam://close/bigpicture`        |
+    | Detached Commands            | `steam://open/bigpicture`         |
+    | Image                        | `steam.png`                       |
+  </Tab>
+  
+  <Tab title="Linux">
+    | Field                        | Value                                     |
+    |------------------------------|-------------------------------------------|
+    | Application Name             | `Steam Big Picture`                       |
+    | Command Preparations → Undo  | `setsid steam steam://close/bigpicture`   |
+    | Detached Commands            | `setsid steam steam://open/bigpicture`    |
+    | Image                        | `steam.png`                               |
+  </Tab>
+  
+  <Tab title="macOS">
+    | Field                        | Value                               |
+    |------------------------------|-------------------------------------|
+    | Application Name             | `Steam Big Picture`                 |
+    | Command Preparations → Undo  | `open steam://close/bigpicture`     |
+    | Detached Commands            | `open steam://open/bigpicture`      |
+    | Image                        | `steam.png`                         |
+  </Tab>
+</Tabs>
+
+<Note>
+On Linux and FreeBSD, use `setsid` to properly detach the Steam process from Sunshine's control.
+</Note>
+
+## Steam Games
+
+Steam games can be launched using URI schemes or direct binary execution.
+
+### Using Steam URI (Recommended)
+
+This method is the most consistent across platforms and games:
+
+<Tabs>
+  <Tab title="Windows">
+    | Field             | Value                         |
+    |-------------------|-------------------------------|
+    | Application Name  | `Surviving Mars`              |
+    | Detached Commands | `steam://rungameid/464920`    |
+  </Tab>
+  
+  <Tab title="Linux">
+    | Field             | Value                                     |
+    |-------------------|-------------------------------------------|
+    | Application Name  | `Surviving Mars`                          |
+    | Detached Commands | `setsid steam steam://rungameid/464920`   |
+  </Tab>
+  
+  <Tab title="macOS">
+    | Field             | Value                             |
+    |-------------------|-----------------------------------|
+    | Application Name  | `Surviving Mars`                  |
+    | Detached Commands | `open steam://rungameid/464920`   |
+  </Tab>
+</Tabs>
+
+<Tip>
+Find a game's Steam App ID by visiting its store page. The ID is in the URL: `https://store.steampowered.com/app/464920/`
+</Tip>
+
+### Using Game Binary with Working Directory
+
+<Tabs>
+  <Tab title="Windows">
+    | Field             | Value                                                       |
+    |-------------------|-------------------------------------------------------------|
+    | Application Name  | `Surviving Mars`                                            |
+    | Command           | `MarsSteam.exe`                                             |
+    | Working Directory | `C:\Program Files (x86)\Steam\steamapps\common\Surviving Mars` |
+  </Tab>
+  
+  <Tab title="Linux">
+    | Field             | Value                                            |
+    |-------------------|--------------------------------------------------|
+    | Application Name  | `Surviving Mars`                                 |
+    | Command           | `MarsSteam`                                      |
+    | Working Directory | `~/.steam/steam/SteamApps/common/Surviving Mars` |
+  </Tab>
+</Tabs>
+
+### Using Game Binary with Full Path
+
+<Tabs>
+  <Tab title="Windows">
+    | Field             | Value                                                                        |
+    |-------------------|------------------------------------------------------------------------------|
+    | Application Name  | `Surviving Mars`                                                             |
+    | Command           | `C:\Program Files (x86)\Steam\steamapps\common\Surviving Mars\MarsSteam.exe` |
+  </Tab>
+  
+  <Tab title="Linux">
+    | Field             | Value                                                    |
+    |-------------------|----------------------------------------------------------|
+    | Application Name  | `Surviving Mars`                                         |
+    | Command           | `~/.steam/steam/SteamApps/common/Surviving Mars/MarsSteam` |
+  </Tab>
+</Tabs>
+
+## Epic Games Store
+
+### Using Epic URI (Recommended)
+
+The URI method provides the most consistent behavior:
+
+<Tabs>
+  <Tab title="Windows">
+    | Field            | Value                                                                                                    |
+    |------------------|----------------------------------------------------------------------------------------------------------|
+    | Application Name | `Surviving Mars`                                                                                         |
+    | Command          | `com.epicgames.launcher://apps/d759128018124dcabb1fbee9bb28e178%3A20729b9176c241f0b617c5723e70ec2d%3AOvenbird?action=launch&silent=true` |
+  </Tab>
+</Tabs>
+
+<Tip>
+Find the Epic Games URI by checking the game's shortcut properties or looking in the Epic Games Launcher's web requests.
+</Tip>
+
+### Using Game Binary
+
+<Tabs>
+  <Tab title="With Working Directory">
+    | Field             | Value                                   |
+    |-------------------|-----------------------------------------|
+    | Application Name  | `Surviving Mars`                        |
+    | Command           | `MarsEpic.exe`                          |
+    | Working Directory | `C:\Program Files\Epic Games\SurvivingMars` |
+  </Tab>
+  
+  <Tab title="With Full Path">
+    | Field             | Value                                                |
+    |-------------------|------------------------------------------------------|
+    | Application Name  | `Surviving Mars`                                     |
+    | Command           | `C:\Program Files\Epic Games\SurvivingMars\MarsEpic.exe` |
+  </Tab>
+</Tabs>
+
+## Prep Commands
+
+Prep commands execute before starting an application and can clean up when the application closes. Common uses include changing resolution, refresh rate, or launching supporting processes.
+
+### Resolution and Refresh Rate Changes
+
+Dynamically adjust display settings based on Moonlight client capabilities using environment variables:
+
+- `${SUNSHINE_CLIENT_WIDTH}` - Client's requested width
+- `${SUNSHINE_CLIENT_HEIGHT}` - Client's requested height
+- `${SUNSHINE_CLIENT_FPS}` - Client's requested frame rate
+
+#### Linux (X11)
+
+| Prep Step | Command                                                                                                       |
+|-----------|---------------------------------------------------------------------------------------------------------------|
+| Do        | `sh -c "xrandr --output HDMI-1 --mode ${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT} --rate ${SUNSHINE_CLIENT_FPS}"` |
+| Undo      | `xrandr --output HDMI-1 --mode 3840x2160 --rate 120`                                                          |
+
+<Tip>
+Replace `HDMI-1` with your display output name. Find it by running `xrandr` without arguments.
+</Tip>
+
+#### Linux (Wayland/wlroots)
+
+For wlroots-based compositors (Hyprland, Sway, etc.):
+
+| Prep Step | Command                                                                                                           |
+|-----------|-------------------------------------------------------------------------------------------------------------------|
+| Do        | `sh -c "wlr-xrandr --output HDMI-1 --mode ${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT}@${SUNSHINE_CLIENT_FPS}Hz"` |
+| Undo      | `wlr-xrandr --output HDMI-1 --mode 3840x2160@120Hz`                                                               |
+
+<Warning>
+`wlr-xrandr` only works with wlroots-based compositors. GNOME and KDE require different tools.
+</Warning>
+
+#### Linux (KDE Plasma)
+
+Works on both Wayland and X11:
+
+| Prep Step | Command                                                                                                      |
+|-----------|--------------------------------------------------------------------------------------------------------------|
+| Do        | `sh -c "kscreen-doctor output.HDMI-A-1.mode.${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT}@${SUNSHINE_CLIENT_FPS}"` |
+| Undo      | `kscreen-doctor output.HDMI-A-1.mode.3840x2160@120`                                                          |
+
+<Tip>
+Find your display name and supported modes by running `kscreen-doctor -o`.
+</Tip>
+
+<Note>
+Display names differ between X11 and Wayland. A monitor might be `HDMI-A-0` on X11 but `HDMI-A-1` on Wayland.
+</Note>
+
+#### Linux (GNOME on Wayland)
+
+Requires [displayconfig-mutter](https://github.com/eaglesemanation/displayconfig-mutter):
+
+| Prep Step | Command                                                                                                                                    |
+|-----------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| Do        | `sh -c "displayconfig-mutter set --connector HDMI-1 --resolution ${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT} --refresh-rate ${SUNSHINE_CLIENT_FPS} --hdr ${SUNSHINE_CLIENT_HDR}"` |
+| Undo      | `displayconfig-mutter set --connector HDMI-1 --resolution 3840x2160 --refresh-rate 120 --hdr false`                                       |
+
+<Note>
+HDR support requires GNOME 48+. Check support with `displayconfig-mutter list`. Remove the `--hdr` flag if your display doesn't support it.
+</Note>
+
+#### Linux (NVIDIA GPUs)
+
+For NVIDIA proprietary drivers:
+
+| Prep Step | Command                                                                                                                                                  |
+|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Do        | `sh -c "nvidia-settings -a CurrentMetaMode=\"HDMI-1: nvidia-auto-select { ViewPortIn=${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT}, ViewPortOut=${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT}+0+0 }\""` |
+| Undo      | `nvidia-settings -a CurrentMetaMode="HDMI-1: nvidia-auto-select { ViewPortIn=3840x2160, ViewPortOut=3840x2160+0+0 }"`                                   |
+
+#### macOS
+
+Requires [displayplacer](https://github.com/jakehilborn/displayplacer):
+
+| Prep Step | Command                                                                                                                          |
+|-----------|----------------------------------------------------------------------------------------------------------------------------------|
+| Do        | `sh -c "displayplacer \"id:<screenId> res:${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT} hz:${SUNSHINE_CLIENT_FPS} scaling:on origin:(0,0) degree:0\""` |
+| Undo      | `displayplacer "id:<screenId> res:3840x2160 hz:120 scaling:on origin:(0,0) degree:0"`                                           |
+
+<Note>
+Replace `<screenId>` with your display's ID. Run `displayplacer list` to find it.
+</Note>
+
+#### Windows
+
+Sunshine has built-in support for resolution changes on Windows. For third-party tools, you can use QRes:
+
+| Prep Step | Command                                                                                         |
+|-----------|-------------------------------------------------------------------------------------------------|
+| Do        | `cmd /C "C:\Tools\qres.exe /x:%SUNSHINE_CLIENT_WIDTH% /y:%SUNSHINE_CLIENT_HEIGHT% /r:%SUNSHINE_CLIENT_FPS%"` |
+| Undo      | `C:\Tools\qres.exe /x:3840 /y:2160 /r:120`                                                      |
+
+<Note>
+[QRes](https://sourceforge.net/projects/qres) must be downloaded separately.
+</Note>
+
+## Platform-Specific Considerations
+
+### Linux (Flatpak)
+
+<Warning>
+Flatpak packages run in a sandboxed environment. All commands must be prefixed with `flatpak-spawn --host`.
+</Warning>
+
+**Example:**
+```bash
+flatpak-spawn --host xrandr --output HDMI-1 --mode 1920x1080
+```
+
+### Windows (Elevated Commands)
+
+If Sunshine is installed as a service (default), you can launch applications with administrative privileges without UAC prompts:
+
+```json
+{
+  "name": "Game With AntiCheat",
+  "cmd": "C:\\Games\\game.exe",
+  "elevated": true,
+  "prep-cmd": [
+    {
+      "do": "powershell.exe -command \"Start-Service GameService\"",
+      "undo": "powershell.exe -command \"Stop-Service GameService\"",
+      "elevated": false
+    }
+  ]
+}
+```
+
+<Note>
+The `elevated` option can be set independently for the main command and each prep command.
+</Note>

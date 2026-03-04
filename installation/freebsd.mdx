@@ -1,0 +1,81 @@
+---
+title: FreeBSD Installation
+description: Install Sunshine on FreeBSD using pkg packages
+---
+
+Sunshine provides native packages for FreeBSD supporting both AMD64 and ARM64 architectures.
+
+## Installation
+
+<Steps>
+  <Step title="Download the package">
+    Download the appropriate package for your architecture:
+
+    | Architecture | Package |
+    |--------------|--------|
+    | amd64/x86_64 | [Sunshine-FreeBSD-14.3-amd64.pkg](https://github.com/LizardByte/Sunshine/releases/latest/download/Sunshine-FreeBSD-14.3-amd64.pkg) |
+    | arm64/aarch64 | [Sunshine-FreeBSD-14.3-aarch64.pkg](https://github.com/LizardByte/Sunshine/releases/latest/download/Sunshine-FreeBSD-14.3-aarch64.pkg) |
+  </Step>
+
+  <Step title="Install the package">
+    Open terminal and run the following command:
+
+    ```sh
+    sudo pkg install ./Sunshine-FreeBSD-14.3-{arch}.pkg
+    ```
+
+    Replace `{arch}` with either `amd64` or `aarch64` depending on your system architecture.
+  </Step>
+</Steps>
+
+## Uninstall
+
+To remove Sunshine from your system:
+
+```sh
+sudo pkg delete Sunshine
+```
+
+## Post-Installation Setup
+
+### Virtual Input Devices
+
+<Warning>
+To use virtual input devices (keyboard, mouse, gamepads), you must add your user to the `input` group.
+</Warning>
+
+The installation process creates the `input` group and configures permissions for `/dev/uinput`. To allow your user to create virtual input devices, run:
+
+```bash
+pw groupmod input -m $USER
+```
+
+After adding yourself to the group, log out and log back in for the changes to take effect.
+
+### Verifying Group Membership
+
+You can verify that you've been added to the input group by running:
+
+```bash
+groups $USER
+```
+
+You should see `input` in the list of groups.
+
+## Known Limitations
+
+The FreeBSD version of Sunshine is missing some features that are present on Linux. The following are known limitations:
+
+- Only X11 and Wayland capture are supported
+- DualSense/DS5 emulation is not available due to missing uhid features
+
+## Architecture Support
+
+Sunshine on FreeBSD supports the following architectures:
+
+- **amd64/x86_64**: Full support on Intel and AMD processors
+- **arm64/aarch64**: Full support on ARM64 processors
+
+<Note>
+Packages are built for FreeBSD 14.3. Ensure your system is running a compatible version of FreeBSD.
+</Note>

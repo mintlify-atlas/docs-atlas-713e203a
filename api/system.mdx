@@ -1,0 +1,368 @@
+---
+title: System
+description: API endpoints for system operations and status
+---
+
+These endpoints provide system-level operations such as retrieving logs, restarting Sunshine, and managing drivers.
+
+## GET /api/logs
+
+Retrieve the Sunshine log file contents.
+
+### Authentication
+
+Required
+
+### Response
+
+Returns the raw log file contents as plain text with `Content-Type: text/plain`.
+
+### Example Request
+
+```bash
+curl -u admin:password \
+  https://localhost:47990/api/logs
+```
+
+### Example Response
+
+```
+[2024-03-04 10:15:23] [info] Sunshine version 0.21.0
+[2024-03-04 10:15:23] [info] Configuration UI available at [https://localhost:47990]
+[2024-03-04 10:15:24] [info] Encoder: libx264
+[2024-03-04 10:15:24] [info] Listening for HTTP connections on port 47989
+```
+
+### Notes
+
+- Returns the entire log file content
+- Log location is platform-specific and configurable
+- Use this endpoint to troubleshoot issues or monitor activity
+- Large log files may take time to transfer
+
+## POST /api/restart
+
+Restart the Sunshine service.
+
+### Authentication
+
+Required
+
+### Request Headers
+
+```
+Content-Type: application/json
+```
+
+### Response
+
+The server may not send a response as it restarts during the request.
+
+### Example Request
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{}' \
+  https://localhost:47990/api/restart
+```
+
+### Notes
+
+- This endpoint triggers a complete Sunshine restart
+- Any active streaming sessions will be terminated
+- The API will be unavailable briefly during restart
+- The request may timeout or disconnect as the server restarts
+- The request body can be empty JSON `{}` but the Content-Type header is required
+- Wait a few seconds before making subsequent API calls
+
+## POST /api/reset-display-device-persistence
+
+Reset display device persistence settings.
+
+### Authentication
+
+Required
+
+### Request Headers
+
+```
+Content-Type: application/json
+```
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the reset operation was successful
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{}' \
+  https://localhost:47990/api/reset-display-device-persistence
+```
+
+### Example Response
+
+```json
+{
+  "status": true
+}
+```
+
+### Notes
+
+- This endpoint resets saved display device settings
+- Useful when display configuration issues occur
+- The request body can be empty JSON `{}` but the Content-Type header is required
+- Platform-specific functionality
+
+## GET /api/vigembus/status
+
+Get ViGEmBus driver version and installation status (Windows only).
+
+### Authentication
+
+Required
+
+### Response
+
+<ResponseField name="installed" type="boolean">
+  Whether ViGEmBus driver is installed
+</ResponseField>
+
+<ResponseField name="version" type="string">
+  Installed driver version (e.g., "1.17.0.0")
+</ResponseField>
+
+<ResponseField name="version_compatible" type="boolean">
+  Whether the installed version is compatible (>= 1.17.0.0)
+</ResponseField>
+
+<ResponseField name="packaged_version" type="string">
+  Version of ViGEmBus packaged with Sunshine
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if not on Windows
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -u admin:password \
+  https://localhost:47990/api/vigembus/status
+```
+
+### Example Response (Windows)
+
+```json
+{
+  "installed": true,
+  "version": "1.17.0.0",
+  "version_compatible": true,
+  "packaged_version": "1.17.333.0"
+}
+```
+
+### Example Response (Non-Windows)
+
+```json
+{
+  "error": "ViGEmBus is only available on Windows",
+  "installed": false,
+  "version": "",
+  "version_compatible": false,
+  "packaged_version": ""
+}
+```
+
+### Notes
+
+- ViGEmBus is a Windows driver for virtual gamepad support
+- Required for proper gamepad emulation on Windows
+- Compatible versions are 1.17.0.0 and higher
+- Driver file is checked at: `%SystemRoot%\System32\drivers\ViGEmBus.sys`
+
+## POST /api/vigembus/install
+
+Install the ViGEmBus driver (Windows only).
+
+### Authentication
+
+Required
+
+### Request Headers
+
+```
+Content-Type: application/json
+```
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the installation was successful
+</ResponseField>
+
+<ResponseField name="exit_code" type="integer">
+  Installer exit code (0 for success)
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if installation failed
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{}' \
+  https://localhost:47990/api/vigembus/install
+```
+
+### Example Response (Success)
+
+```json
+{
+  "status": true,
+  "exit_code": 0
+}
+```
+
+### Example Response (Failure)
+
+```json
+{
+  "status": false,
+  "exit_code": 1,
+  "error": "Installer exited with code 1"
+}
+```
+
+### Error Responses
+
+If installer not found:
+
+```json
+{
+  "status": false,
+  "error": "ViGEmBus installer not found"
+}
+```
+
+If not on Windows:
+
+```json
+{
+  "status": false,
+  "error": "ViGEmBus installation is only available on Windows"
+}
+```
+
+### Notes
+
+- Runs the ViGEmBus installer with elevated privileges
+- Installation is performed silently (`/quiet` flag)
+- The installer is located at `<appdata>/../scripts/vigembus_installer.exe`
+- Installation may take several seconds to complete
+- The request body can be empty JSON `{}` but the Content-Type header is required
+- A system restart may be required after installation
+
+## Example: System Monitoring Script
+
+```bash
+#!/bin/bash
+
+USER="admin"
+PASS="password"
+BASE_URL="https://localhost:47990"
+
+# Check ViGEmBus status (Windows only)
+echo "Checking ViGEmBus status..."
+curl -s -u $USER:$PASS $BASE_URL/api/vigembus/status | jq '.'
+
+# Get recent logs
+echo -e "\n\nRecent logs:"
+curl -s -u $USER:$PASS $BASE_URL/api/logs | tail -20
+
+# Optionally restart Sunshine
+read -p "\nRestart Sunshine? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "Restarting Sunshine..."
+    curl -X POST \
+      -s -u $USER:$PASS \
+      -H "Content-Type: application/json" \
+      -d '{}' \
+      $BASE_URL/api/restart
+    echo "Restart initiated"
+fi
+```
+
+## Python Example: Log Monitoring
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+import time
+
+auth = HTTPBasicAuth('admin', 'password')
+base_url = 'https://localhost:47990'
+
+def get_logs():
+    """Retrieve current logs"""
+    response = requests.get(
+        f'{base_url}/api/logs',
+        auth=auth,
+        verify=False
+    )
+    return response.text
+
+def check_vigembus():
+    """Check ViGEmBus driver status"""
+    response = requests.get(
+        f'{base_url}/api/vigembus/status',
+        auth=auth,
+        verify=False
+    )
+    status = response.json()
+    
+    if status.get('error'):
+        print(f"ViGEmBus Error: {status['error']}")
+    elif status['installed']:
+        print(f"ViGEmBus installed: {status['version']}")
+        print(f"Compatible: {status['version_compatible']}")
+    else:
+        print("ViGEmBus not installed")
+
+def restart_sunshine():
+    """Restart Sunshine service"""
+    try:
+        requests.post(
+            f'{base_url}/api/restart',
+            auth=auth,
+            json={},
+            verify=False,
+            timeout=5
+        )
+    except requests.exceptions.Timeout:
+        print("Restart initiated (connection timeout expected)")
+    except requests.exceptions.RequestException:
+        print("Restart initiated (connection error expected)")
+
+# Example usage
+print("Checking system status...")
+check_vigembus()
+
+print("\nLast 10 log lines:")
+logs = get_logs()
+for line in logs.split('\n')[-10:]:
+    print(line)
+```

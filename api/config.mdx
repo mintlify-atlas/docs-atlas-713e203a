@@ -1,0 +1,380 @@
+---
+title: Configuration
+description: API endpoints for managing Sunshine configuration
+---
+
+These endpoints allow you to retrieve and modify Sunshine configuration settings.
+
+## GET /api/config
+
+Get all current configuration settings.
+
+### Authentication
+
+Required
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Always `true` for successful requests
+</ResponseField>
+
+<ResponseField name="platform" type="string">
+  The platform Sunshine is running on (e.g., "linux", "windows", "macos")
+</ResponseField>
+
+<ResponseField name="version" type="string">
+  The current Sunshine version
+</ResponseField>
+
+Additional fields contain all configuration settings from the config file. Configuration options vary by platform and version.
+
+### Example Request
+
+```bash
+curl -u admin:password \
+  https://localhost:47990/api/config
+```
+
+### Example Response
+
+```json
+{
+  "status": true,
+  "platform": "linux",
+  "version": "0.21.0",
+  "sunshine_name": "Sunshine",
+  "locale": "en",
+  "min_log_level": "info",
+  "port": 47989,
+  "address_family": "both",
+  "channels": 5
+}
+```
+
+### Notes
+
+- Returns all configuration keys and their current values
+- Values match the format used in the configuration file
+- Platform-specific settings may only appear on certain systems
+
+## POST /api/config
+
+Update configuration settings.
+
+### Authentication
+
+Required
+
+### Request Headers
+
+```
+Content-Type: application/json
+```
+
+### Request Body
+
+Provide configuration key-value pairs to update. Only include settings you want to change.
+
+<ParamField body="<config_key>" type="string | number | boolean">
+  Any valid configuration key and its new value
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the configuration was saved successfully
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sunshine_name": "Gaming PC",
+    "min_log_level": "debug",
+    "channels": 7
+  }' \
+  https://localhost:47990/api/config
+```
+
+### Example Response
+
+```json
+{
+  "status": true
+}
+```
+
+### Notes
+
+- Only include settings that differ from defaults or that you want to change
+- Configuration is written to the config file immediately
+- Some settings may require a Sunshine restart to take effect
+- Null or empty string values are skipped and not written to config
+- String values are written without quotes; other types are written as JSON
+
+## GET /api/configLocale
+
+Get the locale setting for the Web UI.
+
+### Authentication
+
+**Not Required** - This is the only API endpoint that works without authentication
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Always `true` for successful requests
+</ResponseField>
+
+<ResponseField name="locale" type="string">
+  The current locale code (e.g., "en", "fr", "de")
+</ResponseField>
+
+### Example Request
+
+```bash
+curl https://localhost:47990/api/configLocale
+```
+
+### Example Response
+
+```json
+{
+  "status": true,
+  "locale": "en"
+}
+```
+
+### Notes
+
+- This endpoint is unauthenticated to allow the login page to display in the correct language
+- Returns only the locale setting, not the full configuration
+
+## POST /api/password
+
+Update or create Web UI credentials.
+
+### Authentication
+
+Required if credentials already exist. Not required for initial setup.
+
+### Request Headers
+
+```
+Content-Type: application/json
+```
+
+### Request Body
+
+<ParamField body="currentUsername" type="string" required>
+  Current username (required if credentials already exist)
+</ParamField>
+
+<ParamField body="currentPassword" type="string" required>
+  Current password (required if credentials already exist)
+</ParamField>
+
+<ParamField body="newUsername" type="string">
+  New username (optional, defaults to current username if not provided)
+</ParamField>
+
+<ParamField body="newPassword" type="string" required>
+  New password
+</ParamField>
+
+<ParamField body="confirmNewPassword" type="string" required>
+  Confirmation of new password (must match `newPassword`)
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the password was updated successfully
+</ResponseField>
+
+### Example Request (Initial Setup)
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "newUsername": "admin",
+    "newPassword": "securePassword123",
+    "confirmNewPassword": "securePassword123"
+  }' \
+  https://localhost:47990/api/password
+```
+
+### Example Request (Update Existing)
+
+```bash
+curl -X POST \
+  -u admin:oldPassword \
+  -H "Content-Type: application/json" \
+  -d '{
+    "currentUsername": "admin",
+    "currentPassword": "oldPassword",
+    "newUsername": "admin",
+    "newPassword": "newPassword123",
+    "confirmNewPassword": "newPassword123"
+  }' \
+  https://localhost:47990/api/password
+```
+
+### Example Response
+
+```json
+{
+  "status": true
+}
+```
+
+### Error Responses
+
+If passwords don't match:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "Password Mismatch"
+}
+```
+
+If current credentials are invalid:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "Invalid Current Credentials"
+}
+```
+
+If username is empty:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "Invalid Username"
+}
+```
+
+### Notes
+
+- Credentials are stored in the `credentials.json` file
+- Passwords are hashed with a random salt before storage
+- When changing an existing password, you must authenticate with current credentials
+- New credentials take effect immediately
+
+## POST /api/pin
+
+Submit a PIN code for client pairing.
+
+### Authentication
+
+Required
+
+### Request Headers
+
+```
+Content-Type: application/json
+```
+
+### Request Body
+
+<ParamField body="pin" type="string" required>
+  4-digit PIN code (0000-9999) displayed in Moonlight client
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Friendly name for the client being paired
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the pairing was successful
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pin": "1234",
+    "name": "Living Room PC"
+  }' \
+  https://localhost:47990/api/pin
+```
+
+### Example Response
+
+```json
+{
+  "status": true
+}
+```
+
+### Error Responses
+
+If PIN is out of range:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "PIN must be between 0000 and 9999"
+}
+```
+
+### Notes
+
+- The PIN is generated by the Moonlight client during pairing
+- PIN must be submitted while the pairing request is active
+- The client name can be any descriptive string
+- After successful pairing, the client appears in `/api/clients/list`
+
+## Example: Complete Configuration Management
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+auth = HTTPBasicAuth('admin', 'password')
+base_url = 'https://localhost:47990'
+
+# Get current configuration
+response = requests.get(f'{base_url}/api/config', auth=auth, verify=False)
+config = response.json()
+print(f"Current version: {config['version']}")
+print(f"Current port: {config.get('port', 47989)}")
+
+# Update configuration
+new_config = {
+    'sunshine_name': 'My Gaming PC',
+    'min_log_level': 'debug'
+}
+
+response = requests.post(
+    f'{base_url}/api/config',
+    auth=auth,
+    json=new_config,
+    verify=False
+)
+
+if response.json()['status']:
+    print("Configuration updated successfully")
+
+# Verify the changes
+response = requests.get(f'{base_url}/api/config', auth=auth, verify=False)
+config = response.json()
+print(f"New name: {config['sunshine_name']}")
+```

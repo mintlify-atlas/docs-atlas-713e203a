@@ -1,0 +1,199 @@
+---
+title: General Settings
+description: Configure locale, logging, credentials, and system tray options
+---
+
+General settings control Sunshine's basic behavior including display language, logging verbosity, system tray integration, and global commands.
+
+## Display and Localization
+
+<ParamField path="locale" type="string" default="en">
+  The locale used for Sunshine's user interface.
+  
+  **Available Languages:**
+  - `bg` - Bulgarian
+  - `cs` - Czech  
+  - `de` - German
+  - `en` - English
+  - `en_GB` - English (UK)
+  - `en_US` - English (United States)
+  - `es` - Spanish
+  - `fr` - French
+  - `it` - Italian
+  - `ja` - Japanese
+  - `ko` - Korean
+  - `pl` - Polish
+  - `pt` - Portuguese
+  - `pt_BR` - Portuguese (Brazilian)
+  - `ru` - Russian
+  - `sv` - Swedish
+  - `tr` - Turkish
+  - `uk` - Ukrainian
+  - `zh` - Chinese (Simplified)
+  - `zh_TW` - Chinese (Traditional)
+
+  ```bash
+  locale = en
+  ```
+</ParamField>
+
+<ParamField path="sunshine_name" type="string" default="PC hostname">
+  The name displayed by Moonlight when browsing for hosts.
+
+  ```bash
+  sunshine_name = My Gaming PC
+  ```
+</ParamField>
+
+## Logging Configuration
+
+<ParamField path="min_log_level" type="string" default="info">
+  The minimum log level printed to standard output.
+
+  **Available Levels:**
+  - `verbose` - All logging messages (may affect performance)
+  - `debug` - Debug messages and higher (may affect performance)
+  - `info` - Informational messages and higher
+  - `warning` - Warning messages and higher
+  - `error` - Error messages and higher
+  - `fatal` - Only fatal messages
+  - `none` - No log messages
+
+  ```bash
+  min_log_level = info
+  ```
+
+  <Warning>
+  Using `verbose` or `debug` log levels may negatively affect streaming performance.
+  </Warning>
+</ParamField>
+
+<ParamField path="log_path" type="string" default="sunshine.log">
+  The path where the Sunshine log file is stored.
+
+  ```bash
+  log_path = sunshine.log
+  ```
+</ParamField>
+
+## System Integration
+
+<ParamField path="system_tray" type="boolean" default="enabled">
+  Show icon in system tray and display desktop notifications.
+
+  ```bash
+  system_tray = enabled
+  ```
+</ParamField>
+
+<ParamField path="notify_pre_releases" type="boolean" default="disabled">
+  Whether to be notified of new pre-release versions of Sunshine.
+
+  ```bash
+  notify_pre_releases = disabled
+  ```
+</ParamField>
+
+## Global Commands
+
+<ParamField path="global_prep_cmd" type="array" default="[]">
+  A list of commands to run before/after all applications. If any prep command fails, starting the application is aborted.
+
+  Each command can have:
+  - `do` - Command to run before launching
+  - `undo` - Command to run after closing  
+  - `elevated` - Whether to run with admin privileges (Windows only)
+
+  ```bash
+  global_prep_cmd = [
+    {
+      "do": "nircmd.exe setdisplay 1280 720 32 144",
+      "elevated": true,
+      "undo": "nircmd.exe setdisplay 2560 1440 32 144"
+    }
+  ]
+  ```
+</ParamField>
+
+## Configuration Files
+
+<ParamField path="file_apps" type="string" default="apps.json">
+  The application configuration file path containing a JSON formatted list of applications that can be started by Moonlight.
+
+  ```bash
+  file_apps = apps.json
+  ```
+</ParamField>
+
+<ParamField path="credentials_file" type="string" default="sunshine_state.json">
+  The file where user credentials for the web UI are stored.
+
+  ```bash
+  credentials_file = sunshine_state.json
+  ```
+</ParamField>
+
+<ParamField path="file_state" type="string" default="sunshine_state.json">
+  The file where the current state of Sunshine is stored.
+
+  ```bash
+  file_state = sunshine_state.json
+  ```
+</ParamField>
+
+## SSL Certificates
+
+<ParamField path="pkey" type="string" default="credentials/cakey.pem">
+  The private key used for the web UI and Moonlight client pairing.
+
+  <Warning>
+  For best compatibility, use an RSA-2048 private key. Not all Moonlight clients support ECDSA keys or other RSA key lengths.
+  </Warning>
+
+  ```bash
+  pkey = /dir/pkey.pem
+  ```
+</ParamField>
+
+<ParamField path="cert" type="string" default="credentials/cacert.pem">
+  The certificate used for the web UI and Moonlight client pairing.
+
+  <Warning>
+  For best compatibility, use a certificate with an RSA-2048 public key.
+  </Warning>
+
+  ```bash
+  cert = /dir/cert.pem
+  ```
+</ParamField>
+
+## Example Configuration
+
+```bash
+# Display Settings
+locale = en_US
+sunshine_name = Gaming Server
+
+# Logging
+min_log_level = info
+log_path = sunshine.log
+
+# System Integration  
+system_tray = enabled
+notify_pre_releases = disabled
+
+# File Paths
+file_apps = apps.json
+credentials_file = sunshine_state.json
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Audio/Video Settings" icon="video" href="/configuration/audio-video">
+    Configure encoders and streaming quality
+  </Card>
+  <Card title="Input Configuration" icon="gamepad" href="/configuration/input">
+    Set up gamepad and input device emulation
+  </Card>
+</CardGroup>

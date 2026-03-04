@@ -1,0 +1,146 @@
+---
+title: Introduction
+description: Learn about Sunshine, a self-hosted game streaming server for Moonlight clients with support for AMD, Intel, and Nvidia GPUs.
+---
+
+## What is Sunshine?
+
+Sunshine is a self-hosted game stream host for Moonlight clients. It enables you to stream games and applications from your computer to any device running a Moonlight client, offering low-latency, cloud gaming server capabilities.
+
+<Info>
+Sunshine works with any Moonlight client on a variety of devices including Windows, macOS, Linux, Android, iOS, and more.
+</Info>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Hardware Encoding" icon="microchip">
+    Support for AMD, Intel, and Nvidia GPUs with hardware encoding acceleration. Software encoding is also available as a fallback.
+  </Card>
+  
+  <Card title="Low Latency" icon="gauge-high">
+    Optimized for minimal latency to provide a smooth gaming experience over local networks or the internet.
+  </Card>
+  
+  <Card title="Web UI" icon="browser">
+    Comprehensive web interface for configuration, client pairing, and management accessible from any browser.
+  </Card>
+  
+  <Card title="Multi-Platform" icon="server">
+    Runs on Linux, Windows, macOS, and FreeBSD with platform-specific optimizations.
+  </Card>
+</CardGroup>
+
+## System Requirements
+
+<Warning>
+These requirements are guidelines. Do not purchase hardware based solely on this information.
+</Warning>
+
+### Minimum Requirements
+
+**GPU**
+- **AMD**: VCE 1.0 or higher ([hardware support](https://github.com/obsproject/obs-amd-encoder/wiki/Hardware-Support))
+- **Intel**: 
+  - FreeBSD/Linux: VAAPI-compatible ([hardware support](https://www.intel.com/content/www/us/en/developer/articles/technical/linuxmedia-vaapi.html))
+  - Windows: Skylake or newer with QuickSync encoding support
+- **Nvidia**: NVENC enabled cards ([support matrix](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new))
+
+**CPU**
+- **AMD**: Ryzen 3 or higher
+- **Intel**: Core i3 or higher
+
+**RAM**
+- 4GB or more
+
+**Operating System**
+- FreeBSD: 14.3+
+- Linux/Debian: 13+ (trixie)
+- Linux/Fedora: 41+
+- Linux/Ubuntu: 22.04+ (jammy)
+- macOS: 14+
+- Windows: 11+ (Windows Server does not support virtual gamepads)
+
+**Network**
+- Host: 5GHz, 802.11ac
+- Client: 5GHz, 802.11ac
+
+### 4K Streaming Recommendations
+
+For optimal 4K streaming performance:
+
+**GPU**
+- **AMD**: Video Coding Engine 3.1 or higher
+- **Intel**: HD Graphics 510 or higher (FreeBSD/Linux), Skylake or newer (Windows)
+- **Nvidia**: GeForce RTX 2000 series or higher (FreeBSD/Linux), GeForce GTX 1080 or higher (Windows)
+
+**CPU**
+- **AMD**: Ryzen 5 or higher
+- **Intel**: Core i5 or higher
+
+**Network**
+- Both host and client: CAT5e ethernet or better
+
+### HDR Streaming Recommendations
+
+For HDR streaming support:
+
+**GPU**
+- **AMD**: Video Coding Engine 3.4 or higher
+- **Intel**: HD Graphics 730 or higher
+- **Nvidia**: Pascal-based GPU (GTX 10-series) or higher
+
+**CPU**
+- **AMD**: Ryzen 5 or higher
+- **Intel**: Core i5 or higher
+
+**Network**
+- Both host and client: CAT5e ethernet or better
+
+## Platform Feature Support
+
+Sunshine provides different features depending on your platform:
+
+### GPU Encoding
+
+| GPU Type | FreeBSD | Linux | macOS | Windows |
+|----------|---------|-------|-------|----------|
+| AMD/AMF | ✅ (vaapi) | ✅ (vaapi) | ✅ (Video Toolbox) | ✅ |
+| Intel QuickSync | ✅ (vaapi) | ✅ (vaapi) | ✅ (Video Toolbox) | ✅ |
+| NVIDIA NVENC | ✅ (vaapi) | ✅ (vaapi) | ✅ (Video Toolbox) | ✅ |
+
+### Screen Capture
+
+| Method | FreeBSD | Linux | macOS | Windows |
+|--------|---------|-------|-------|----------|
+| DXGI | ➖ | ➖ | ➖ | ✅ |
+| KMS | ❌ | ✅ | ➖ | ➖ |
+| NVIDIA NvFBC (X11) | ➖ | ✅ | ➖ | ➖ |
+| Video Toolbox | ➖ | ➖ | ✅ | ➖ |
+| Wayland | ✅ | ✅ | ➖ | ➖ |
+| Windows.Graphics.Capture | ➖ | ➖ | ➖ | ✅ |
+| X11 | ✅ | ✅ | ➖ | ➖ |
+
+### Gamepad Emulation
+
+| Controller Type | FreeBSD | Linux | macOS | Windows |
+|----------------|---------|-------|-------|----------|
+| DualShock 4 (PS4) | ➖ | ➖ | ❌ | ✅ |
+| DualSense (PS5) | ❌ | ✅ | ❌ | ❌ |
+| Nintendo Switch Pro | ✅ | ✅ | ❌ | ❌ |
+| Xbox 360 | ➖ | ➖ | ❌ | ✅ |
+| Xbox One/Series | ✅ | ✅ | ❌ | ❌ |
+
+**Legend**: ✅ Supported | ❌ Not Yet Supported | ➖ Not Applicable
+
+<Note>
+For a complete feature compatibility reference, see the [README](https://github.com/LizardByte/Sunshine/blob/master/README.md#-feature-compatibility).
+</Note>
+
+## Next Steps
+
+Ready to get started? Continue to the installation guide:
+
+<Card title="Installation" icon="download" href="/installation">
+  Learn how to install Sunshine on your platform
+</Card>

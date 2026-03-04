@@ -1,0 +1,197 @@
+---
+title: Authentication
+description: How to authenticate with the Sunshine API
+---
+
+The Sunshine API uses HTTP Basic Authentication to secure access to endpoints. This page explains how to set up and use authentication.
+
+## Authentication Method
+
+All API endpoints (except `/api/configLocale`) require HTTP Basic Authentication using your admin username and password.
+
+### Basic Authentication
+
+Basic Authentication sends credentials as a Base64-encoded string in the `Authorization` header:
+
+```
+Authorization: Basic <base64-encoded-credentials>
+```
+
+The credentials are formatted as `username:password` before encoding.
+
+## Setting Up Credentials
+
+Before using the API, you must configure your admin credentials:
+
+1. **First Time Setup**: When you first start Sunshine, you'll be redirected to the welcome page to create your username and password
+2. **Via Web UI**: Navigate to `https://localhost:47990/password` to update your credentials
+3. **Via API**: Use the `/api/password` endpoint (see [Configuration endpoints](/api/config#post-apipassword))
+
+Credentials are stored securely in the `credentials.json` file in your Sunshine configuration directory.
+
+## Making Authenticated Requests
+
+### Using curl
+
+The `-u` flag automatically handles Basic Authentication encoding:
+
+```bash
+curl -u admin:password https://localhost:47990/api/config
+```
+
+Or manually specify the Authorization header:
+
+```bash
+curl -H "Authorization: Basic YWRtaW46cGFzc3dvcmQ=" \
+  https://localhost:47990/api/config
+```
+
+### Using Python (requests)
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+response = requests.get(
+    'https://localhost:47990/api/config',
+    auth=HTTPBasicAuth('admin', 'password'),
+    verify=False  # Only if using self-signed certificate
+)
+print(response.json())
+```
+
+### Using JavaScript (fetch)
+
+```javascript
+const username = 'admin';
+const password = 'password';
+const credentials = btoa(`${username}:${password}`);
+
+fetch('https://localhost:47990/api/config', {
+  headers: {
+    'Authorization': `Basic ${credentials}`
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data));
+```
+
+### Using PowerShell
+
+```powershell
+$username = "admin"
+$password = "password"
+$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("${username}:${password}")))
+
+$headers = @{
+    Authorization = "Basic $base64AuthInfo"
+}
+
+Invoke-RestMethod -Uri "https://localhost:47990/api/config" -Headers $headers
+```
+
+## Authentication Flow
+
+### Successful Authentication
+
+When authentication succeeds, the API returns the requested data with HTTP 200 status:
+
+```json
+{
+  "status": true,
+  "data": "..."
+}
+```
+
+### Failed Authentication
+
+When authentication fails, the API returns HTTP 401 Unauthorized:
+
+```json
+{
+  "status_code": 401,
+  "status": false,
+  "error": "Unauthorized"
+}
+```
+
+The response includes a `WWW-Authenticate` header prompting for credentials:
+
+```
+WWW-Authenticate: Basic realm="Sunshine Gamestream Host", charset="UTF-8"
+```
+
+### No Credentials Set
+
+If no credentials have been configured, requests are redirected to the welcome page:
+
+```
+HTTP/1.1 307 Temporary Redirect
+Location: /welcome
+```
+
+## IP-Based Access Control
+
+In addition to username/password authentication, Sunshine enforces IP-based access control. Requests from unauthorized network origins receive HTTP 403 Forbidden:
+
+```
+HTTP/1.1 403 Forbidden
+```
+
+The `origin_web_ui_allowed` configuration setting controls which network interfaces can access the Web UI and API.
+
+## Unauthenticated Endpoints
+
+The following endpoint does not require authentication:
+
+- `GET /api/configLocale` - Returns the locale setting for the Web UI
+
+This allows the login page to display in the correct language before authentication.
+
+## Security Considerations
+
+### HTTPS Required
+
+The API is only served over HTTPS to protect credentials in transit. Sunshine generates a self-signed certificate on first run.
+
+### Certificate Verification
+
+When using the API with self-signed certificates, you may need to:
+
+- Disable certificate verification in your HTTP client (development only)
+- Add the certificate to your system's trust store (recommended for production)
+- Use the `-k` or `--insecure` flag in curl
+
+### Password Storage
+
+Passwords are hashed using a cryptographic hash function combined with a random salt before storage. The salt and hash are stored in `credentials.json`.
+
+### Credential Updates
+
+To update credentials, you must provide:
+
+- Current username and password (to verify authorization)
+- New username (optional, defaults to current)
+- New password and confirmation
+
+See the [POST /api/password](/api/config#post-apipassword) endpoint for details.
+
+## Example: Complete Request
+
+Here's a complete example of an authenticated API request:
+
+```bash
+curl -X GET \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -k \
+  https://localhost:47990/api/apps
+```
+
+This request:
+
+1. Uses GET method
+2. Authenticates with Basic Auth (`-u admin:password`)
+3. Sets the Content-Type header
+4. Skips certificate verification (`-k`)
+5. Requests the list of applications

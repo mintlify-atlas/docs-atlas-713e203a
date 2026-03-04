@@ -1,0 +1,111 @@
+---
+title: API Overview
+description: Introduction to the Sunshine REST API
+---
+
+Sunshine provides a RESTful API for automation and integration with external services. The API allows you to manage applications, clients, configuration settings, and system operations programmatically.
+
+## Base URL
+
+The API is served over HTTPS on the Web UI port. By default, the base URL is:
+
+```
+https://localhost:47990/api
+```
+
+The port number is configurable and defaults to `47989 + 1` (base port + 1).
+
+## Versioning
+
+The current API does not use versioning in the URL path. All endpoints are accessed directly under `/api`.
+
+## Authentication
+
+All API endpoints require authentication using HTTP Basic Authentication, unless otherwise specified. You must provide the admin username and password that you configured during initial setup.
+
+See the [Authentication](/api/authentication) page for detailed information on how to authenticate API requests.
+
+## Response Format
+
+All API responses are returned in JSON format with the `Content-Type: application/json` header.
+
+### Success Response
+
+Successful responses typically include a `status` field:
+
+```json
+{
+  "status": true
+}
+```
+
+Many endpoints return additional data fields along with the status:
+
+```json
+{
+  "status": true,
+  "platform": "linux",
+  "version": "0.21.0"
+}
+```
+
+### Error Response
+
+Error responses include standard HTTP status codes and a JSON body with error details:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "Error message description"
+}
+```
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes:
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Success - Request completed successfully |
+| 400 | Bad Request - Invalid input or parameters |
+| 401 | Unauthorized - Authentication required or failed |
+| 403 | Forbidden - Access denied from your IP address |
+| 404 | Not Found - Resource does not exist |
+| 307 | Temporary Redirect - Redirected to another page |
+
+## Error Handling
+
+The API provides descriptive error messages to help troubleshoot issues:
+
+- **400 Bad Request**: Invalid JSON format, missing required fields, or invalid parameter values
+- **401 Unauthorized**: Missing or invalid authentication credentials
+- **403 Forbidden**: Request origin not allowed (IP-based restrictions)
+- **404 Not Found**: Requested resource (e.g., application index) does not exist
+
+## Security Headers
+
+All API responses include security headers:
+
+- `X-Frame-Options: DENY` - Prevents clickjacking attacks
+- `Content-Security-Policy: frame-ancestors 'none'` - Additional frame protection
+
+## Request Content Type
+
+POST endpoints that accept JSON data require the `Content-Type: application/json` header. Requests without the proper content type will receive a 400 Bad Request error.
+
+## Getting Started
+
+To get started with the API:
+
+1. Set up your Sunshine username and password via the Web UI
+2. Choose your preferred HTTP client or library
+3. Use Basic Authentication with your credentials
+4. Start making requests to the API endpoints
+
+Refer to the endpoint-specific documentation for detailed information:
+
+- [Applications](/api/apps) - Manage streaming applications
+- [Clients](/api/clients) - Manage paired clients
+- [Configuration](/api/config) - Get and update configuration
+- [System](/api/system) - System operations and logs

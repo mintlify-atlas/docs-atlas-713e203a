@@ -1,0 +1,168 @@
+---
+title: Windows Installation
+description: Install Sunshine on Windows using the installer or portable version
+---
+
+Sunshine provides multiple installation options for Windows. The installer is recommended for most users.
+
+<Note>
+Sunshine supports ARM64 on Windows; however, this should be considered experimental. This version does not properly support GPU scheduling and any hardware acceleration.
+</Note>
+
+## Installation Methods
+
+<Tabs>
+  <Tab title="Installer (Recommended)">
+    <Warning>
+    The msi installer is preferred moving forward. Before using a different type of installer, you should manually uninstall the previous installation.
+    </Warning>
+
+    ### Download and Install
+
+    Download and install based on your architecture:
+
+    | Architecture | Installer |
+    |--------------|----------|
+    | AMD64/x64 (Intel/AMD) | [Sunshine-Windows-AMD64-installer.msi](https://github.com/LizardByte/Sunshine/releases/latest/download/Sunshine-Windows-AMD64-installer.msi) |
+    | AMD64/x64 (Intel/AMD) | [Sunshine-Windows-AMD64-installer.exe](https://github.com/LizardByte/Sunshine/releases/latest/download/Sunshine-Windows-AMD64-installer.exe) |
+    | ARM64 | [Sunshine-Windows-ARM64-installer.msi](https://github.com/LizardByte/Sunshine/releases/latest/download/Sunshine-Windows-ARM64-installer.msi) |
+    | ARM64 | [Sunshine-Windows-ARM64-installer.exe](https://github.com/LizardByte/Sunshine/releases/latest/download/Sunshine-Windows-ARM64-installer.exe) |
+
+    <Warning>
+    You should carefully select or unselect the options you want to install. Do not blindly install or enable features.
+    </Warning>
+
+    ### Installer Logs
+
+    Installer logs can be found in the following locations:
+
+    | File | Log Paths |
+    |------|----------|
+    | .exe | `%PROGRAMFILES%/Sunshine/install.log` (AMD64 only)<br/>`%TEMP%/Sunshine/logs/install/` |
+    | .msi | `%TEMP%/Sunshine/logs/install/` |
+
+    ### Uninstall
+
+    To uninstall, find Sunshine in the list [here](ms-settings:installed-apps) and select "Uninstall" from the overflow menu. Different versions of Windows may provide slightly different steps for uninstall.
+  </Tab>
+
+  <Tab title="Winget">
+    You can install Sunshine using Windows Package Manager (winget):
+
+    ```powershell
+    winget install LizardByte.Sunshine
+    ```
+
+    ### Uninstall
+
+    ```powershell
+    winget uninstall LizardByte.Sunshine
+    ```
+  </Tab>
+
+  <Tab title="Portable Version">
+    <Warning>
+    By using this package instead of the installer, performance will be reduced. This package is not recommended for most users. No support will be provided!
+    </Warning>
+
+    ### Download and Extract
+
+    Download and extract based on your architecture:
+
+    | Architecture | Package |
+    |--------------|--------|
+    | AMD64/x64 (Intel/AMD) | [Sunshine-Windows-AMD64-portable.zip](https://github.com/LizardByte/Sunshine/releases/latest/download/Sunshine-Windows-AMD64-portable.zip) |
+    | ARM64 | [Sunshine-Windows-ARM64-portable.zip](https://github.com/LizardByte/Sunshine/releases/latest/download/Sunshine-Windows-ARM64-portable.zip) |
+
+    ### Setup
+
+    <Steps>
+      <Step title="Open command prompt as administrator">
+        Right-click on Command Prompt and select "Run as administrator".
+      </Step>
+
+      <Step title="Install firewall rules">
+        ```bash
+        cd /d {path to extracted directory}
+        scripts/add-firewall-rule.bat
+        ```
+      </Step>
+
+      <Step title="Install Windows service (optional)">
+        If you want Sunshine to run as a service:
+
+        ```bash
+        cd /d {path to extracted directory}
+        scripts/install-service.bat
+        scripts/autostart-service.bat
+        ```
+      </Step>
+    </Steps>
+
+    ### Uninstall
+
+    <Steps>
+      <Step title="Remove firewall rules">
+        ```bash
+        cd /d {path to extracted directory}
+        scripts/delete-firewall-rule.bat
+        ```
+      </Step>
+
+      <Step title="Uninstall Windows service">
+        If you installed the service:
+
+        ```bash
+        cd /d {path to extracted directory}
+        scripts/uninstall-service.bat
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Service vs Portable Mode
+
+### Service Mode (Default)
+
+- Runs automatically in the background
+- Starts on system boot
+- Runs with elevated privileges
+- Recommended for most users
+- Enables all features including virtual gamepad support
+
+### Portable Mode
+
+- Manual startup required
+- Runs with current user privileges
+- Limited feature set
+- Reduced performance
+- Not recommended for typical use
+
+## Post-Installation Setup
+
+### ViGEmBus Installation
+
+In order for virtual gamepads to work, you must install ViGEmBus. You can do this from the troubleshooting tab in the web UI, as long as you are running Sunshine as a service or as an administrator. After installation, it is recommended to restart your computer.
+
+<Note>
+Virtual gamepad support requires ViGEmBus. This can be installed directly from the Sunshine web UI troubleshooting tab.
+</Note>
+
+## Additional Considerations
+
+### Desktop Duplication API
+
+On Windows, Sunshine uses the Desktop Duplication API which only supports capturing from the GPU used for display. If you want to capture and encode on the eGPU, connect a display or HDMI dummy display dongle to it and run the games on that display.
+
+### HDR Support
+
+HDR streaming is supported for Intel, AMD, and NVIDIA GPUs that support encoding HEVC Main 10 or AV1 10-bit profiles.
+
+<Tip>
+We recommend calibrating the display by streaming the Windows HDR Calibration app to your client device and saving an HDR calibration profile to use while streaming.
+</Tip>
+
+<Note>
+Older games that use NVIDIA-specific NVAPI HDR rather than native Windows HDR support may not display properly in HDR.
+</Note>

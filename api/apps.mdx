@@ -1,0 +1,474 @@
+---
+title: Applications
+description: API endpoints for managing streaming applications
+---
+
+These endpoints allow you to manage the applications available for streaming.
+
+## GET /api/apps
+
+Get the list of available applications.
+
+### Authentication
+
+Required
+
+### Response
+
+<ResponseField name="apps" type="array">
+  Array of application objects
+  
+  <ResponseField name="name" type="string">
+    Application name
+  </ResponseField>
+  
+  <ResponseField name="cmd" type="string">
+    Command to launch the application
+  </ResponseField>
+  
+  <ResponseField name="output" type="string">
+    Path to log output file (optional)
+  </ResponseField>
+  
+  <ResponseField name="image-path" type="string">
+    Full path to the application cover image (PNG file) (optional)
+  </ResponseField>
+  
+  <ResponseField name="exclude-global-prep-cmd" type="boolean">
+    Whether to exclude global preparation commands
+  </ResponseField>
+  
+  <ResponseField name="elevated" type="boolean">
+    Whether to run the application with elevated privileges
+  </ResponseField>
+  
+  <ResponseField name="auto-detach" type="boolean">
+    Whether to automatically detach from the application process
+  </ResponseField>
+  
+  <ResponseField name="wait-all" type="boolean">
+    Whether to wait for all child processes to exit
+  </ResponseField>
+  
+  <ResponseField name="exit-timeout" type="integer">
+    Timeout in seconds before force-closing the application
+  </ResponseField>
+  
+  <ResponseField name="prep-cmd" type="array">
+    Array of preparation commands (optional)
+    
+    <ResponseField name="do" type="string">
+      Command to execute before launching the application
+    </ResponseField>
+    
+    <ResponseField name="undo" type="string">
+      Command to execute after closing the application
+    </ResponseField>
+    
+    <ResponseField name="elevated" type="boolean">
+      Whether to run this command with elevated privileges
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="detached" type="array">
+    Array of detached commands to run alongside the application (optional)
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -u admin:password \
+  https://localhost:47990/api/apps
+```
+
+### Example Response
+
+```json
+{
+  "apps": [
+    {
+      "name": "Steam",
+      "cmd": "steam -bigpicture",
+      "output": "/var/log/sunshine/steam.log",
+      "exclude-global-prep-cmd": false,
+      "elevated": false,
+      "auto-detach": true,
+      "wait-all": true,
+      "exit-timeout": 5,
+      "image-path": "/home/user/.config/sunshine/covers/steam.png"
+    }
+  ]
+}
+```
+
+## POST /api/apps
+
+Create a new application or update an existing one.
+
+### Authentication
+
+Required
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  Application name
+</ParamField>
+
+<ParamField body="cmd" type="string">
+  Command to launch the application
+</ParamField>
+
+<ParamField body="index" type="integer" required>
+  Application index. Use `-1` to create a new application, or provide the existing index to update an application
+</ParamField>
+
+<ParamField body="output" type="string">
+  Path to log output file
+</ParamField>
+
+<ParamField body="image-path" type="string">
+  Full path to the application cover image (must be a PNG file)
+</ParamField>
+
+<ParamField body="exclude-global-prep-cmd" type="boolean" default={false}>
+  Exclude global preparation commands
+</ParamField>
+
+<ParamField body="elevated" type="boolean" default={false}>
+  Run with elevated privileges
+</ParamField>
+
+<ParamField body="auto-detach" type="boolean" default={true}>
+  Automatically detach from the application process
+</ParamField>
+
+<ParamField body="wait-all" type="boolean" default={true}>
+  Wait for all child processes to exit
+</ParamField>
+
+<ParamField body="exit-timeout" type="integer" default={5}>
+  Timeout in seconds before force-closing
+</ParamField>
+
+<ParamField body="prep-cmd" type="array">
+  Array of preparation commands
+  
+  <ParamField body="do" type="string">
+    Command to execute before launching
+  </ParamField>
+  
+  <ParamField body="undo" type="string">
+    Command to execute after closing
+  </ParamField>
+  
+  <ParamField body="elevated" type="boolean">
+    Run with elevated privileges
+  </ParamField>
+</ParamField>
+
+<ParamField body="detached" type="array">
+  Array of detached commands (strings) to run alongside the application
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the operation was successful
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Desktop",
+    "cmd": "",
+    "index": -1,
+    "auto-detach": true,
+    "exit-timeout": 5
+  }' \
+  https://localhost:47990/api/apps
+```
+
+### Example Response
+
+```json
+{
+  "status": true
+}
+```
+
+### Notes
+
+- Applications are automatically sorted by name after creation or update
+- Empty `prep-cmd` and `detached` arrays are removed from the configuration
+- Use index `-1` to create a new application; it will be added to the end of the list (before sorting)
+
+## POST /api/apps/close
+
+Close the currently running application.
+
+### Authentication
+
+Required
+
+### Request Headers
+
+```
+Content-Type: application/json
+```
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the operation was successful
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{}' \
+  https://localhost:47990/api/apps/close
+```
+
+### Example Response
+
+```json
+{
+  "status": true
+}
+```
+
+### Notes
+
+- This terminates the currently running application process
+- The request body can be empty JSON `{}` but the Content-Type header is required
+
+## DELETE /api/apps/{index}
+
+Delete an application by its index.
+
+### Authentication
+
+Required
+
+### Path Parameters
+
+<ParamField path="index" type="integer" required>
+  The zero-based index of the application to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the operation was successful
+</ResponseField>
+
+<ResponseField name="result" type="string">
+  Success message indicating which application was deleted
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X DELETE \
+  -u admin:password \
+  https://localhost:47990/api/apps/2
+```
+
+### Example Response
+
+```json
+{
+  "status": true,
+  "result": "application 2 deleted"
+}
+```
+
+### Error Responses
+
+If the index is out of range:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "'index' 2 out of range, max index is 1"
+}
+```
+
+If no applications exist:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "No applications found"
+}
+```
+
+## GET /api/covers/{index}
+
+Get the cover image for an application.
+
+### Authentication
+
+Required
+
+### Path Parameters
+
+<ParamField path="index" type="integer" required>
+  The zero-based index of the application
+</ParamField>
+
+### Response
+
+Returns the PNG image file with `Content-Type: image/png` header.
+
+### Example Request
+
+```bash
+curl -u admin:password \
+  -o cover.png \
+  https://localhost:47990/api/covers/0
+```
+
+### Error Responses
+
+If the application has no cover image:
+
+```json
+{
+  "status_code": 404,
+  "error": "Cover image not found"
+}
+```
+
+If the index is out of range:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "'index' 5 out of range, max index is 3"
+}
+```
+
+### Notes
+
+- Only PNG files are supported for cover images
+- The image path is validated to ensure it's a valid PNG file
+- If no custom image is set, the default image path is used
+
+## POST /api/covers/upload
+
+Upload or download a cover image for applications.
+
+### Authentication
+
+Required
+
+### Request Body
+
+<ParamField body="key" type="string" required>
+  Unique identifier for the cover image (e.g., `igdb_<game_id>`)
+</ParamField>
+
+<ParamField body="url" type="string">
+  URL to download the image from (must be from `images.igdb.com`). If provided, the image will be downloaded
+</ParamField>
+
+<ParamField body="data" type="string">
+  Base64-encoded image data. Used if `url` is not provided
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="boolean">
+  Whether the upload was successful
+</ResponseField>
+
+<ResponseField name="path" type="string">
+  File path where the cover image was saved
+</ResponseField>
+
+### Example Request (URL)
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "igdb_1234",
+    "url": "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/abc123.png"
+  }' \
+  https://localhost:47990/api/covers/upload
+```
+
+### Example Request (Base64)
+
+```bash
+curl -X POST \
+  -u admin:password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "my_custom_app",
+    "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+  }' \
+  https://localhost:47990/api/covers/upload
+```
+
+### Example Response
+
+```json
+{
+  "status": true,
+  "path": "/home/user/.config/sunshine/covers/igdb_1234.png"
+}
+```
+
+### Error Responses
+
+If the key is missing:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "Cover key is required"
+}
+```
+
+If the URL host is not allowed:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "Only images.igdb.com is allowed"
+}
+```
+
+If the download fails:
+
+```json
+{
+  "status_code": 400,
+  "status": false,
+  "error": "Failed to download cover"
+}
+```
+
+### Notes
+
+- Images are stored in the `covers/` subdirectory of the Sunshine config directory
+- The key is URL-escaped before being used as the filename
+- Only `images.igdb.com` is allowed as an external image source for security
+- You can use either `url` (for downloading) or `data` (for direct upload)

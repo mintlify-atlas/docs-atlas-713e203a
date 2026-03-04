@@ -1,0 +1,442 @@
+---
+title: Docker Compose Deployment
+description: Deploy Sunshine using Docker Compose with proper configuration
+---
+
+## Overview
+
+Sunshine can be deployed as a Docker container using Docker Compose. This method provides isolation and easy management of the streaming service.
+
+<Warning>
+Docker images are not recommended for most users. Use native packages when possible for better performance and hardware access.
+</Warning>
+
+## Prerequisites
+
+- Docker Engine 20.10 or later
+- Docker Compose v2 or later
+- GPU drivers installed on the host system
+- `/dev/dri` device access (for hardware encoding)
+
+## Available Images
+
+Sunshine images are available on [Docker Hub](https://hub.docker.com/r/lizardbyte/sunshine) and [GitHub Container Registry](https://github.com/orgs/LizardByte/packages?repo_name=sunshine).
+
+### Image Tags
+
+Combine version and OS to determine the tag: `<VERSION>-<OS>`
+
+**Versions:**
+- `latest` - Latest stable release
+- `master` - Latest development build
+- `vX.X.X` - Specific version
+- `<commit-hash>` - Specific commit
+
+**Operating Systems:**
+- `debian-bookworm`
+- `ubuntu-22.04`
+- `ubuntu-24.04`
+
+**Example:** `lizardbyte/sunshine:latest-ubuntu-24.04`
+
+### Supported Architectures
+
+| OS              | amd64/x86_64 | arm64/aarch64 |
+|-----------------|--------------|---------------|
+| debian-bookworm | ✅           | ✅            |
+| ubuntu-22.04    | ✅           | ✅            |
+| ubuntu-24.04    | ✅           | ✅            |
+
+## Docker Compose Configuration
+
+<Steps>
+
+### Step 1: Create docker-compose.yml
+
+Create a `docker-compose.yml` file with the following contents:
+
+<CodeGroup>
+
+```yaml docker-compose.yml
+version: '3'
+services:
+  sunshine:
+    image: lizardbyte/sunshine:latest-ubuntu-24.04
+    container_name: sunshine
+    restart: unless-stopped
+    
+    # GPU access for hardware encoding
+    devices:
+      - /dev/dri:/dev/dri
+    
+    # Required for proper IPC
+    ipc: host
+    
+    # Volume mappings
+    volumes:
+      - ./config:/config
+    
+    # Environment variables
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    
+    # Port mappings
+    ports:
+      - "47984-47990:47984-47990/tcp"  # Video, Audio, Control
+      - "48010:48010"                   # Web UI (HTTPS)
+      - "47998-48000:47998-48000/udp"  # Video, Audio
+
+```
+
+```yaml docker-compose.yml (Advanced)
+version: '3'
+services:
+  sunshine:
+    image: lizardbyte/sunshine:latest-ubuntu-24.04
+    container_name: sunshine
+    restart: unless-stopped
+    
+    # GPU access
+    devices:
+      - /dev/dri:/dev/dri
+    
+    # Network configuration
+    network_mode: host
+    
+    # Required for proper IPC
+    ipc: host
+    
+    # Volume mappings
+    volumes:
+      - ./config:/config
+      - ./apps:/apps
+      - ./logs:/var/log
+    
+    # Environment variables
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      - SUNSHINE_USER=admin
+      - SUNSHINE_PASS=changeme
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+```
+
+</CodeGroup>
+
+### Step 2: Configure Environment Variables
+
+Replace the placeholder values with your settings:
+
+| Variable | Description | Example | Required |
+|----------|-------------|---------|----------|
+| `PUID` | User ID | `1000` | No |
+| `PGID` | Group ID | `1000` | No |
+| `TZ` | Timezone | `America/New_York` | No |
+| `SUNSHINE_USER` | Web UI username | `admin` | No |
+| `SUNSHINE_PASS` | Web UI password | `changeme` | No |
+
+<Info>
+To find your user and group IDs, run: `id $USER`
+</Info>
+
+### Step 3: Create Configuration Directory
+
+```bash
+mkdir -p ./config
+chown -R $(id -u):$(id -g) ./config
+```
+
+### Step 4: Start the Container
+
+```bash
+docker-compose up -d
+```
+
+### Step 5: Verify Deployment
+
+```bash
+# Check container status
+docker-compose ps
+
+# View logs
+docker-compose logs -f sunshine
+```
+
+</Steps>
+
+## Volume Mappings
+
+### Configuration Directory
+
+The `/config` directory stores all Sunshine configuration files:
+
+```
+config/
+├── sunshine.conf          # Main configuration
+├── apps.json             # Application list
+├── sunshine_state.json   # State and credentials
+└── credentials/          # SSL certificates
+    ├── cakey.pem
+    └── cacert.pem
+```
+
+### Optional Volumes
+
+```yaml
+volumes:
+  - ./logs:/var/log                    # Log files
+  - ./games:/games:ro                  # Game directories (read-only)
+  - /run/udev:/run/udev:ro            # Device information
+```
+
+## Port Configuration
+
+### Required Ports
+
+| Port Range | Protocol | Purpose |
+|------------|----------|----------|
+| 47984-47990 | TCP | Video/Audio streaming, Control |
+| 47998-48000 | UDP | Video/Audio data |
+| 48010 | TCP | Web UI (HTTPS) |
+
+### Custom Port Configuration
+
+To change the default port (47989), adjust all related ports:
+
+```yaml
+ports:
+  - "48000-48006:47984-47990/tcp"
+  - "48026:48010"
+  - "48014-48016:47998-48000/udp"
+environment:
+  - SUNSHINE_PORT=48005
+```
+
+## Network Modes
+
+### Bridge Mode (Default)
+
+Uses Docker's bridge network with explicit port mappings. Recommended for most deployments.
+
+```yaml
+ports:
+  - "47984-47990:47984-47990/tcp"
+  - "48010:48010"
+  - "47998-48000:47998-48000/udp"
+```
+
+### Host Mode
+
+Uses the host's network directly. Better performance but less isolation.
+
+```yaml
+network_mode: host
+# Remove 'ports:' section when using host mode
+```
+
+## Hardware Access
+
+### GPU Access (Required)
+
+For hardware encoding, the container needs access to GPU devices:
+
+```yaml
+devices:
+  - /dev/dri:/dev/dri              # Intel/AMD GPU
+  - /dev/nvidia0:/dev/nvidia0      # NVIDIA GPU (optional)
+  - /dev/nvidiactl:/dev/nvidiactl  # NVIDIA control (optional)
+```
+
+### NVIDIA GPU (Additional Setup)
+
+For NVIDIA GPUs, install [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html):
+
+```yaml
+services:
+  sunshine:
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+```
+
+## Using Podman
+
+Sunshine works with Podman as a Docker alternative:
+
+<CodeGroup>
+
+```bash Podman Run
+podman run -d \
+  --device /dev/dri/ \
+  --name=sunshine \
+  --restart=unless-stopped \
+  --userns=keep-id \
+  -e PUID=$(id -u) \
+  -e PGID=$(id -g) \
+  -e TZ=America/New_York \
+  -v ./config:/config \
+  -p 47984-47990:47984-47990/tcp \
+  -p 48010:48010 \
+  -p 47998-48000:47998-48000/udp \
+  lizardbyte/sunshine:latest-ubuntu-24.04
+```
+
+```yaml podman-compose.yml
+version: '3'
+services:
+  sunshine:
+    image: lizardbyte/sunshine:latest-ubuntu-24.04
+    container_name: sunshine
+    restart: unless-stopped
+    userns_mode: keep-id
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./config:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    ports:
+      - "47984-47990:47984-47990/tcp"
+      - "48010:48010"
+      - "47998-48000:47998-48000/udp"
+```
+
+</CodeGroup>
+
+## Management Commands
+
+### Start/Stop Container
+
+```bash
+# Start
+docker-compose up -d
+
+# Stop
+docker-compose down
+
+# Restart
+docker-compose restart
+```
+
+### View Logs
+
+```bash
+# All logs
+docker-compose logs
+
+# Follow logs
+docker-compose logs -f
+
+# Last 100 lines
+docker-compose logs --tail=100
+```
+
+### Update Container
+
+```bash
+# Pull latest image
+docker-compose pull
+
+# Recreate container
+docker-compose up -d
+```
+
+### Access Container Shell
+
+```bash
+docker-compose exec sunshine bash
+```
+
+## Building Custom Images
+
+You can extend the Sunshine image for custom needs:
+
+```dockerfile Dockerfile
+ARG SUNSHINE_VERSION=latest
+ARG SUNSHINE_OS=ubuntu-24.04
+FROM lizardbyte/sunshine:${SUNSHINE_VERSION}-${SUNSHINE_OS}
+
+# Install additional packages
+RUN apt-get update && apt-get install -y \
+    steam \
+    && rm -rf /var/lib/apt/lists/*
+
+# Custom entrypoint
+ENTRYPOINT ["/usr/bin/sunshine"]
+```
+
+Build and use:
+
+```bash
+docker build -t sunshine-custom .
+```
+
+Update `docker-compose.yml`:
+
+```yaml
+services:
+  sunshine:
+    image: sunshine-custom
+    build: .
+```
+
+## Troubleshooting
+
+### Container Won't Start
+
+```bash
+# Check logs
+docker-compose logs sunshine
+
+# Verify GPU access
+docker-compose exec sunshine ls -l /dev/dri
+```
+
+### Permission Issues
+
+```bash
+# Fix config directory permissions
+sudo chown -R $(id -u):$(id -g) ./config
+```
+
+### Network Issues
+
+```bash
+# Verify ports are not in use
+sudo netstat -tuln | grep -E '(47989|48010)'
+
+# Try host network mode
+# Add to docker-compose.yml:
+network_mode: host
+```
+
+### Performance Issues
+
+- Ensure `/dev/dri` device is accessible
+- Verify GPU drivers are installed on host
+- Use host network mode for better performance
+- Increase resource limits if needed
+
+## Related Resources
+
+- [Docker Documentation](https://docs.docker.com/)
+- [Docker Compose Specification](https://docs.docker.com/compose/compose-file/)
+- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/)
+- [Games on Whales](https://games-on-whales.github.io) - Advanced Docker setup
