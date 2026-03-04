@@ -1,0 +1,127 @@
+{
+  "projectType": "infrastructure",
+  "projectName": "Sunshine",
+  "projectDescription": "Self-hosted game stream host for Moonlight",
+  "theme": "aspen",
+  "primaryColor": "#04f704",
+  "lightColor": "#0c5e0c",
+  "darkColor": "#040404",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Installation",
+            "pages": [
+              "installation/linux",
+              "installation/windows",
+              "installation/macos",
+              "installation/freebsd",
+              "installation/docker"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/overview",
+              "configuration/general",
+              "configuration/audio-video",
+              "configuration/input",
+              "configuration/network",
+              "configuration/apps"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/performance-tuning",
+              "guides/gamestream-migration",
+              "guides/app-examples",
+              "guides/troubleshooting"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/docker-compose",
+              "deployment/systemd",
+              "deployment/security"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "REST API",
+            "pages": [
+              "api/overview",
+              "api/authentication",
+              "api/apps",
+              "api/clients",
+              "api/config",
+              "api/system"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Contributing",
+            "pages": [
+              "development/overview",
+              "development/building",
+              "development/architecture",
+              "development/contributing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Low-latency game streaming with hardware encoding support",
+    "Multi-platform support (Linux, Windows, macOS, FreeBSD)",
+    "Hardware encoder support for AMD, Intel, and Nvidia GPUs",
+    "Web UI for configuration and client pairing",
+    "RESTful API for automation and integration",
+    "Docker deployment support",
+    "Gamepad emulation for multiple controller types",
+    "Multiple screen capture methods per platform",
+    "UPnP/NAT traversal support",
+    "HDR and 4K streaming capabilities"
+  ],
+  "publicApiSurface": [
+    "GET /api/apps - List configured applications",
+    "POST /api/apps - Save application configuration",
+    "POST /api/apps/close - Close running application",
+    "DELETE /api/apps/{index} - Delete application",
+    "GET /api/clients/list - List paired clients",
+    "POST /api/clients/unpair - Unpair a client",
+    "POST /api/clients/unpair-all - Unpair all clients",
+    "GET /api/config - Get configuration",
+    "POST /api/config - Update configuration",
+    "GET /api/configLocale - Get locale configuration",
+    "GET /api/covers/{index} - Get application cover image",
+    "POST /api/covers/upload - Upload cover image",
+    "GET /api/logs - Get system logs",
+    "POST /api/password - Update admin password",
+    "POST /api/pin - Save pairing PIN",
+    "POST /api/reset-display-device-persistence - Reset display settings",
+    "POST /api/restart - Restart Sunshine service",
+    "GET /api/vigembus/status - Get ViGEmBus status (Windows)",
+    "POST /api/vigembus/install - Install ViGEmBus (Windows)"
+  ]
+}
